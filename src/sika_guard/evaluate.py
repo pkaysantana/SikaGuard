@@ -8,10 +8,29 @@ policy only ever sees the `Case`; labels are joined afterwards for scoring.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 from collections import Counter
+from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
+from pathlib import Path
 
+from sika_guard.coordinator import Condition, CoordinatorConfig
+from sika_guard.evaluators.llm import (
+    ENV_JSON_MODE,
+    ENV_PRICE_IN,
+    ENV_PRICE_OUT,
+    ENV_TEMPERATURE,
+    ENV_TIMEOUT,
+    REQUIRED_ENV,
+    ConfigError,
+    LLMAnalyst,
+    LLMClient,
+    LLMConfig,
+)
+from sika_guard.evaluators.mocks import OFFLINE_MODES, offline_evaluators
+from sika_guard.evaluators.prompts import GENERALIST, SPECIALISTS
+from sika_guard.experiment import RunMetadata, export_json, format_experiment_report, run_condition, score
 from sika_guard.fixtures.cases import build_cases
 from sika_guard.fixtures.labels import LABELS
 from sika_guard.labels import AttackFamily, GroundTruth
@@ -172,14 +191,93 @@ def format_report(outcomes: list[CaseOutcome], *, show_cases: bool = False) -> s
     return "\n".join(out)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="sika-guard-eval", description="Evaluate the deterministic baseline on the synthetic fixtures.")
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="sika-guard-eval",
+        description="Evaluate the deterministic baseline (A), or add one general-purpose analyst (B) or three concurrent specialists (C).",
+    )
+    parser.add_argument("--condition", choices=["A", "B", "C"], default="A", help="A: deterministic baseline (default); B: plus one analyst; C: plus three specialists")
+    parser.add_argument("--offline", choices=OFFLINE_MODES, help="B/C only: use scripted mock evaluators instead of a model API (checks plumbing, not AI)")
     parser.add_argument("--cases", action="store_true", help="also print one line per case")
+    parser.add_argument("--case", action="append", dest="case_ids", metavar="ID", help="evaluate only this case id (repeatable)")
+    parser.add_argument("--limit", type=int, metavar="N", help="evaluate only the first N cases")
+    parser.add_argument("--fail-closed", action="store_true", help="B/C only: escalate ALLOW to REVIEW when an evaluator yields no usable verdict")
+    parser.add_argument("--output-json", type=Path, metavar="PATH", help="B/C only: also write raw records to this file")
+    return parser
+
+
+def _select_cases(args: argparse.Namespace) -> list[Case]:
+    cases = build_cases()
+    if args.case_ids:
+        unknown = sorted(set(args.case_ids) - {c.case_id for c in cases})
+        if unknown:
+            raise SystemExit(f"unknown case id(s): {', '.join(unknown)}")
+        cases = [c for c in cases if c.case_id in args.case_ids]
+    return cases[: args.limit] if args.limit else cases
+
+
+def _missing_config_message(missing: tuple[str, ...]) -> str:
+    return "\n".join(
+        [
+            "Cannot run Condition B/C against a live model: missing environment variables: " + ", ".join(missing or REQUIRED_ENV),
+            f"Required: {', '.join(REQUIRED_ENV)}.",
+            f"Optional: {ENV_TIMEOUT} (seconds, default 60), {ENV_TEMPERATURE}, {ENV_JSON_MODE} (0 to omit response_format), "
+            f"{ENV_PRICE_IN} and {ENV_PRICE_OUT} (both needed to report cost).",
+            "Use --offline allow|review|timeout|invalid to exercise the pipeline with mock evaluators instead.",
+        ]
+    )
+
+
+async def _run_ai(args: argparse.Namespace) -> int:
+    condition = Condition(args.condition)
+    specs = [GENERALIST] if condition is Condition.B else list(SPECIALISTS)
+    cases = _select_cases(args)
+    config = CoordinatorConfig(fail_closed=args.fail_closed)
+
+    async with AsyncExitStack() as stack:
+        llm_description = None
+        if args.offline:
+            mode = f"offline-mock:{args.offline}"
+            evaluators = offline_evaluators(args.offline, [spec.role for spec in specs])
+        else:
+            try:
+                llm_config = LLMConfig.from_env()
+            except ConfigError as exc:
+                print(_missing_config_message(exc.missing) if exc.missing else f"Configuration error: {exc}", file=sys.stderr)
+                return 2
+            client = await stack.enter_async_context(LLMClient(llm_config))
+            evaluators = [LLMAnalyst(spec, client) for spec in specs]
+            llm_description, mode = llm_config.describe(), "live"
+        records = await run_condition(cases, condition, evaluators, config)
+
+    seen = {v.evaluator_id: {"evaluator_id": v.evaluator_id, "prompt_version": v.prompt_version, "model_id": v.model_id} for r in records for v in r.verdicts}
+    meta = RunMetadata(
+        condition=condition,
+        mode=mode,
+        evaluators=tuple(seen.values()),
+        llm=llm_description,
+        fail_closed=args.fail_closed,
+        policy={"max_evidence_age_minutes": config.policy.max_evidence_age.total_seconds() / 60, "material_gap_minor": config.policy.material_gap_minor},
+    )
+    scored = score(records, LABELS)  # labels are joined only now, after inference
+    print(format_experiment_report(meta, scored, show_cases=args.cases))
+    if args.output_json:
+        export_json(args.output_json, meta, scored)
+        print(f"\nRaw records written to {args.output_json}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    print(format_report(run_baseline(), show_cases=args.cases))
-    return 0
+    if args.condition == "A":
+        if args.offline or args.fail_closed or args.output_json:
+            parser.error("--offline, --fail-closed and --output-json apply to Conditions B and C only")
+        print(format_report(run_baseline(), show_cases=args.cases))
+        return 0
+    return asyncio.run(_run_ai(args))
 
 
 if __name__ == "__main__":

@@ -4,7 +4,10 @@ Sika Guard tests whether independent checks can stop an AI purchasing agent from
 
 The threat is a correctly authenticated and authorised agent that believes false merchant information and selects a worse offer. Every hard limit, payee restriction and signed mandate can be satisfied, and the customer still overpays.
 
-This repository is the **deterministic foundation** for later AI experiments: typed models, a rule-based policy, 20 synthetic cases with separate ground-truth labels, and a baseline evaluator. It makes no model calls.
+The repository has two layers:
+
+1. A **deterministic foundation**: typed models, a rule-based policy, 20 synthetic cases with separate ground-truth labels, and a baseline evaluator.
+2. An **experimental AI layer**: an evaluator interface, one general-purpose analyst (Condition B), three concurrent specialist analysts (Condition C), and a deterministic coordinator that keeps the rule engine's decisions final.
 
 ## The flagship scenario
 
@@ -42,15 +45,60 @@ pip install -e ".[dev]"
 pytest
 ```
 
-## Run the baseline evaluator
+The tests use mocked evaluators and a mocked HTTP transport. They need no network and no credentials.
+
+## The three conditions
+
+| | What decides | Command |
+|---|---|---|
+| **A** | Deterministic rules only | `sika-guard-eval` (or `--condition A`) |
+| **B** | Rules, plus one general-purpose LLM analyst | `sika-guard-eval --condition B` |
+| **C** | Rules, plus three specialist LLM analysts run concurrently | `sika-guard-eval --condition C` |
+
+Useful flags: `--cases` (one line per case), `--case ID` (repeatable) or `--limit N` (a few cases for a smoke test), `--output-json PATH` (raw records), `--fail-closed` (see below).
+
+`python -m sika_guard.evaluate` is equivalent to `sika-guard-eval`.
+
+### Offline mock mode
 
 ```bash
-sika-guard-eval            # summary
-sika-guard-eval --cases    # plus one line per case
-# or: python -m sika_guard.evaluate
+sika-guard-eval --condition C --offline review --limit 5 --cases
 ```
 
-The report separates **expected** (the fixture author's ideal decision) from **detected** (what the deterministic policy returned), and breaks results down by attack family. Fixtures and policy were written together, so agreement with the labels is a consistency check, not a performance estimate.
+`--offline allow|review|timeout|invalid` swaps the models for scripted mock evaluators. It exercises the whole pipeline with no credentials, and the report says it is not model output. It says nothing about AI performance.
+
+### Live models
+
+B and C talk to any OpenAI-compatible `/chat/completions` endpoint. Nothing in the code names a vendor, model or URL; you supply them.
+
+| Environment variable | Required | Meaning |
+|---|---|---|
+| `SIKA_GUARD_LLM_BASE_URL` | yes | e.g. the provider's `.../v1` URL |
+| `SIKA_GUARD_LLM_API_KEY` | yes | bearer token; never printed or saved |
+| `SIKA_GUARD_LLM_MODEL` | yes | model identifier |
+| `SIKA_GUARD_LLM_TIMEOUT_SECONDS` | no | per-call limit, default 60 |
+| `SIKA_GUARD_LLM_TEMPERATURE` | no | omitted from requests when unset |
+| `SIKA_GUARD_LLM_JSON_MODE` | no | `0` stops sending `response_format: json_object` |
+| `SIKA_GUARD_LLM_PRICE_INPUT_PER_MTOK`, `SIKA_GUARD_LLM_PRICE_OUTPUT_PER_MTOK` | no | per-million-token prices; both are needed before any cost is reported |
+
+If a required variable is missing, the command names it and exits with status 2.
+
+## How the AI layer is constrained
+
+- **The rule engine goes first and is final on BLOCK.** A model verdict can raise ALLOW to REVIEW. It cannot lower a decision and cannot create a BLOCK; a model that proposes BLOCK is recorded as proposing it, and the result is REVIEW. There is no majority vote, and a model's risk score is recorded but never used.
+- **Models receive no labels and no rule-engine findings.** Each forms its own view from the same label-free `EvaluatorView`.
+- **Trust domains stay apart.** Payloads put authenticated data (customer intent, mandate, transaction, lender terms, evidence from independent sources) under `trusted`, and everything a merchant wrote under `untrusted_merchant_content`. System prompts are static; merchant text appears only in the user message, as JSON data.
+- **B and C get the same information.** Each specialist's view is a subset of B's, and together they cover all of it (enforced by a test). Only the merchant-claim analyst reads merchant free text.
+- **Specialists are isolated.** They run concurrently with `asyncio.gather` over one shared HTTP client, and none sees another's output.
+- **Cross-domain comparison happens in code.** Models extract claims, with a verbatim quote, from merchant text. Trusted code checks the quote is really there and compares the claim with the lender terms or the deterministic evidence rules. A claim is "proven false" only that way, never on a model's say-so.
+- **Failures are explicit.** Timeouts, refusals, provider errors, malformed output and unknown evidence references each have their own status and are recorded as abstentions. A missing response is never evidence about the merchant. By default the rule engine's decision stands when an evaluator fails; `--fail-closed` instead escalates ALLOW to REVIEW.
+- **Disagreement and abstention are separate outcomes.**
+
+## What the report measures
+
+Per run: final verdict, each evaluator's verdict and finding codes, whether a harmful case was intercepted, benign false escalation, authorised-but-inferior outcomes, provider and structured-output failures, abstentions, total and per-call latency, provider-reported token usage, and cost only when prices are configured.
+
+Latency shows median and p95 only from 20 samples; smaller samples are labelled descriptive. Token counts come from the provider's response and are never estimated. Prompt versions, model identifier and configuration are printed with every run (the API key is not).
 
 ## Layout
 
@@ -60,7 +108,16 @@ src/sika_guard/
   models.py           Intent, mandate, offers, schedules, assertions, evidence, decisions
   policy.py           Deterministic checks and decision merging
   labels.py           Ground-truth model (never passed to a detector)
-  evaluate.py         Baseline evaluator CLI
+  coordinator.py      Rules first, then AI conditions, then deterministic merge
+  experiment.py       Run a condition, score against labels afterwards, report
+  evaluate.py         CLI for conditions A, B and C
+  evaluators/
+    contract.py       EvaluatorView, strict ModelAnalysis schema, EvaluatorVerdict, statuses
+    payloads.py       What each analyst is shown, by trust domain
+    prompts.py        Versioned static role prompts
+    llm.py            OpenAI-compatible client and the LLM analyst
+    mocks.py          Deterministic mock evaluators for tests and offline mode
+    crosscheck.py     Trusted comparison of model-extracted claims
   fixtures/
     cases.py          20 evaluator-visible cases, neutral ids
     labels.py         Ground truth for those cases
@@ -70,15 +127,17 @@ tests/
 
 ## Current limitations
 
-- **No AI.** No model is called, and nothing here says how well any model performs.
-- **Only availability claims** are modelled as merchant assertions, plus the merchant's advertised total against its own schedule. Other claim types (fees, rates, delivery) are not.
-- **Unverifiable lies are invisible.** A false claim with no usable independent evidence is indistinguishable from a true one. The baseline ALLOWs it (case-15), and no deterministic rule can fix that.
-- **Synthetic, self-authored fixtures.** All data is fictional. The 20 cases are hand-built to exercise the rules, so they say little about real-world prevalence or difficulty.
-- **Mandates are assumed authentic.** Signature and cryptographic verification are out of scope. Authentication is assumed.
-- **Evidence is simple.** An observation counts only if it is for the same offer, from an independent source (a lender source must be the offer's own lender), observed after the claim, and no more than one hour before the proposal. Evidence with no matching merchant claim is ignored.
-- **Instruction-like text detection is a short regex list.** It is a cheap signal, not a prompt-injection defence.
-- Only two-decimal currencies (GBP, EUR, USD) are supported. Fixtures use GBP; EUR appears only in tests of currency mismatch.
+- **No live results yet.** Everything is tested against mocked transports. No claim is made about how any real model performs, and nothing here shows that three specialists beat one analyst.
+- **No matched-compute baseline.** C makes three calls per case and B one. A fair comparison needs a single-model baseline given equal compute (for example, three samples of B); that is not built.
+- **The 20 fixtures are hand-authored** alongside the rules. They are not a representative benchmark, so every figure is descriptive.
+- **Only availability claims are modelled as structured merchant assertions**, plus the advertised total against the merchant's own schedule. Free-text availability claims have no timestamp, so the cross-check cannot test them against evidence.
+- **Unverifiable lies are invisible.** A false claim with no usable independent evidence looks like a true one. The rules ALLOW it (case-15) and a model can at most send it to REVIEW; no layer here can prove it false.
+- **Trust assumption:** the offer's `schedule` is treated as lender-originated terms, while its title, description and advertised total are the merchant's representation.
+- **Prompts are version 1**, written once from each role's remit and not tuned. Output limits are strict, so a verbose model can produce `invalid_response` results; that is recorded, not retried.
+- **Mandates are assumed authentic.** Signature and cryptographic verification are out of scope.
+- **Instruction-like text detection in the rule engine is a short regex list**, a cheap signal and not a prompt-injection defence.
+- Only two-decimal currencies (GBP, EUR, USD) are supported. Fixtures use GBP; EUR appears only in currency-mismatch tests.
 
 ## Deliberately deferred
 
-Model calls, Telluvian integration, parallel LLM orchestration, adaptive routing, the 320-case benchmark, any frontend or dashboard, live payments, wallets and credit applications, PSP integrations, cross-rail budget reservations, production authentication and deployment.
+A matched-compute baseline, adaptive routing, a held-out evaluation set, the 320-case benchmark, any frontend or dashboard, live payments, wallets and credit applications, PSP integrations, cross-rail budget reservations, production authentication and deployment.

@@ -53,3 +53,15 @@ def test_baseline_results_are_pinned():
     assert [o.case.case_id for o in summary.disagreements] == ["case-15"]  # an uncorroborated false claim is invisible
     assert (summary.false_claim_confirmed, summary.false_claim_total) == (5, 7)
     assert (summary.inferior_escalated, summary.inferior_missed) == (6, 1)
+
+
+def test_no_inference_code_can_reach_labels_or_fixtures():
+    import sika_guard
+
+    root = Path(inspect.getsourcefile(sika_guard)).parent
+    inference_sources = [*(root / "evaluators").glob("*.py"), root / "coordinator.py", root / "policy.py"]
+    assert len(inference_sources) >= 9
+    for path in inference_sources:
+        source = path.read_text(encoding="utf-8")
+        assert "GroundTruth" not in source, path.name
+        assert "sika_guard.labels" not in source and "sika_guard.fixtures" not in source, path.name

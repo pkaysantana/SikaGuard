@@ -78,6 +78,11 @@ class Money(BaseModel):
         self._require_same_currency(other)
         return self.amount_minor >= other.amount_minor
 
+    def plain(self) -> str:
+        """Unambiguous machine-friendly form, e.g. '660.00 GBP'."""
+        major, minor = divmod(self.amount_minor, 100)
+        return f"{major}.{minor:02d} {self.currency}"
+
     def __str__(self) -> str:
         major, minor = divmod(self.amount_minor, 100)
         return f"{CURRENCY_SYMBOLS[self.currency]}{major:,}.{minor:02d}"
