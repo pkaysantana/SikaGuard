@@ -1,6 +1,6 @@
-# Sika Guard
+# SikaGuard
 
-Sika Guard tests whether independent checks can stop an AI purchasing agent from making a financially harmful decision that is still correctly authorised.
+SikaGuard tests whether independent checks can stop an AI purchasing agent from making a financially harmful decision that is still correctly authorised.
 
 The threat is a correctly authenticated and authorised agent that believes false merchant information and selects a worse offer. Every hard limit, payee restriction and signed mandate can be satisfied, and the customer still overpays.
 
