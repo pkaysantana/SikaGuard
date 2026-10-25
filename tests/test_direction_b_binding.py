@@ -91,8 +91,10 @@ def test_r10_a_live_run_needs_a_frozen_approved_manifest_and_a_development_basel
 
 
 def test_r10_a_manifest_can_be_frozen_only_by_name_and_only_from_a_clean_committed_tree(tmp_path, monkeypatch):
+    dirty = {"git_available": True, "head": "abc", "head_matches_working_tree": False, "changed_or_untracked_paths": ["x.py"], "note": ""}
+    monkeypatch.setattr(mf, "working_tree_state", lambda root: dirty)  # a tree with uncommitted changes (this repository's own state varies)
     with pytest.raises(ValueError, match="clean, committed Git tree"):
-        mf.build_manifest(status="frozen", approved_by="A. Reviewer")  # this working tree has uncommitted changes
+        mf.build_manifest(status="frozen", approved_by="A. Reviewer")
     with pytest.raises(ValueError, match="name of whoever approved"):
         mf.build_manifest(status="frozen")
     clean = {"git_available": True, "head": "abc", "head_matches_working_tree": True, "changed_or_untracked_paths": [], "note": ""}
