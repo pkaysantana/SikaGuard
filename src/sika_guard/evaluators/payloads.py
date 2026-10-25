@@ -6,7 +6,11 @@ Every payload is a projection of the same underlying facts, split into two trust
                              transaction, lender-originated financing terms, and evidence from sources
                              independent of the merchant
   untrusted_merchant_content text and figures the merchant supplied, including any evidence that
-                             arrived over a merchant-controlled channel
+                             arrived over a merchant-controlled channel and any document the merchant wrote
+  authenticated_source_documents
+                             (only when there are any) passages whose origin is independent of the merchant, such as a
+                             lender's disclosure. The origin is established; the content is still only text, and it is
+                             not assumed to be correct or to concern the offer being bought
 
 The generalist sees everything. Each specialist sees only what its task needs, and a specialist's
 fields are always a subset of the generalist's, so Condition C never sees anything Condition B
@@ -23,7 +27,7 @@ from collections.abc import Callable, Iterator
 from typing import Any
 
 from sika_guard.evaluators.contract import EvaluatorRole, EvaluatorView
-from sika_guard.models import Evidence, FinancingOffer, MerchantAssertion
+from sika_guard.models import Evidence, FinancingOffer, MerchantAssertion, SourceDocument, SourceKind
 
 Payload = dict[str, Any]
 
@@ -104,6 +108,7 @@ def _terms(o: FinancingOffer) -> Payload:
         "lender_id": o.lender_id,
         "payee_id": o.payee_id,
         "term_months": s.term_months,
+        "scope": o.scope.value,
         "payments": [p.plain() for p in s.payments],
         "fees": [{"kind": f.kind.value, "amount": f.amount.plain(), "due_upfront": f.due_upfront} for f in s.fees],
         "computed": _computed(o),
@@ -126,32 +131,60 @@ def _assertion(a: MerchantAssertion) -> Payload:
         "ref": f"assertion:{a.assertion_id}",
         "offer_id": a.offer_id,
         "claims_available": a.claims_available,
+        "subject": a.subject.value,
         "statement": a.statement,
         "made_at": a.made_at.isoformat(),
     }
 
 
-def _evidence(e: Evidence) -> Payload:
+def _evidence(e: Evidence, merchant_id: str) -> Payload:
     return {
         "ref": f"evidence:{e.evidence_id}",
         "offer_id": e.offer_id,
         "offer_available": e.offer_available,
+        "subject": e.subject.value,
+        **({"customer_id": e.customer_id} if e.customer_id is not None else {}),
         "observed_at": e.observed_at.isoformat(),
         "source": {
             "source_id": e.source.source_id,
             "name": e.source.name,
             "kind": e.source.kind.value,
-            "independent_of_merchant": e.source.independent_of_merchant,
+            "independent_of_merchant": e.source.is_independent_of(merchant_id),
         },
     }
 
 
 def _independent(view: EvaluatorView) -> list[Payload]:
-    return [_evidence(e) for e in view.evidence if e.source.independent_of_merchant]
+    mid = view.merchant.merchant_id
+    return [_evidence(e, mid) for e in view.evidence if e.source.is_independent_of(mid)]
 
 
 def _merchant_channel(view: EvaluatorView) -> list[Payload]:
-    return [_evidence(e) for e in view.evidence if not e.source.independent_of_merchant]
+    mid = view.merchant.merchant_id
+    return [_evidence(e, mid) for e in view.evidence if not e.source.is_independent_of(mid)]
+
+
+def _document(d: SourceDocument, view: EvaluatorView) -> Payload:
+    offer = next((o for o in view.offers if o.offer_id == d.offer_id), None)
+    return {
+        "ref": f"doc:{d.document_id}",
+        "offer_id": d.offer_id,
+        "origin": d.source.kind.value,
+        "origin_independent_of_merchant": d.source.is_independent_of(view.merchant.merchant_id),
+        "origin_is_the_bound_offers_lender": bool(offer is not None and d.source.kind is SourceKind.LENDER and d.source.source_id == offer.lender_id),
+        "published_at": d.published_at.isoformat(),
+        "text": d.text,
+    }
+
+
+def _documents(view: EvaluatorView, *, independent: bool) -> list[Payload]:
+    """Documents of one origin class that exist at the decision clock. A document dated after it is impossible and is not shown."""
+    mid = view.merchant.merchant_id
+    return [_document(d, view) for d in view.documents if d.published_at <= view.as_of and d.source.is_independent_of(mid) == independent]
+
+
+def _trusted_context(view: EvaluatorView) -> Payload:
+    return {"ref": "context:trusted", "evaluated_at": view.trusted.evaluated_at.isoformat(), "acting_agent_id": view.trusted.acting_agent_id}
 
 
 def _merchant(view: EvaluatorView) -> Payload:
@@ -161,11 +194,21 @@ def _merchant(view: EvaluatorView) -> Payload:
 # --- Payload per role -------------------------------------------------------
 
 
+def _with_documents(payload: Payload, merchant_docs: list[Payload], independent_docs: list[Payload]) -> Payload:
+    """Add document sections only when there are documents, so a case without any is presented exactly as before."""
+    if merchant_docs:
+        payload["untrusted_merchant_content"]["documents"] = merchant_docs
+    if independent_docs:
+        payload["authenticated_source_documents"] = independent_docs
+    return payload
+
+
 def generalist_payload(view: EvaluatorView) -> Payload:
-    return {
+    return _with_documents({
         "task_context": _task(view),
         "trusted": {
             "customer_intent": _intent(view),
+            "trusted_context": _trusted_context(view),
             "mandate": _mandate(view),
             "proposed_transaction": _transaction(view),
             "lender_terms": [_terms(o) for o in view.offers],
@@ -177,13 +220,13 @@ def generalist_payload(view: EvaluatorView) -> Payload:
             "assertions": [_assertion(a) for a in view.assertions],
             "merchant_channel_evidence": _merchant_channel(view),
         },
-    }
+    }, _documents(view, independent=False), _documents(view, independent=True))
 
 
 def merchant_claim_payload(view: EvaluatorView) -> Payload:
     intent = _intent(view)
     txn = _transaction(view)
-    return {
+    return _with_documents({
         "task_context": _task(view),
         "trusted": {
             "customer_intent": _pick(intent, "ref", "objective", "instruction"),
@@ -200,13 +243,13 @@ def merchant_claim_payload(view: EvaluatorView) -> Payload:
             "assertions": [_assertion(a) for a in view.assertions],
             "merchant_channel_evidence": _merchant_channel(view),
         },
-    }
+    }, _documents(view, independent=False), [])
 
 
 def credit_terms_payload(view: EvaluatorView) -> Payload:
     intent = _intent(view)
     txn = _transaction(view)
-    return {
+    return _with_documents({
         "task_context": _task(view),
         "trusted": {
             "customer_intent": _pick(intent, "ref", "objective", "term_months", "max_total_repayment", "max_monthly_payment"),
@@ -216,7 +259,7 @@ def credit_terms_payload(view: EvaluatorView) -> Payload:
         "untrusted_merchant_content": {
             "offer_listings": [_pick(_listing(o), "ref", "offer_id", "advertised_total_repayable") for o in view.offers],
         },
-    }
+    }, [], _documents(view, independent=True))
 
 
 def authority_payload(view: EvaluatorView) -> Payload:
@@ -228,11 +271,12 @@ def authority_payload(view: EvaluatorView) -> Payload:
             "customer_intent": _pick(
                 intent, "ref", "customer_id", "term_months", "max_total_repayment", "max_monthly_payment", "requested_offer_id"
             ),
+            "trusted_context": _trusted_context(view),
             "mandate": _mandate(view),
             "proposed_transaction": _transaction(view),
             "lender_terms": [
                 {
-                    **_pick(_terms(o), "ref", "offer_id", "merchant_id", "lender_id", "payee_id", "term_months"),
+                    **_pick(_terms(o), "ref", "offer_id", "merchant_id", "lender_id", "payee_id", "term_months", "scope"),
                     "computed": _pick(_computed(o), "total_repayable", "max_monthly_payment", "initial_charge"),
                 }
                 for o in view.offers
@@ -244,7 +288,9 @@ def authority_payload(view: EvaluatorView) -> Payload:
 
 PAYLOAD_BUILDERS: dict[EvaluatorRole, Callable[[EvaluatorView], Payload]] = {
     EvaluatorRole.GENERALIST: generalist_payload,
+    EvaluatorRole.RUBRIC_GENERALIST: generalist_payload,
     EvaluatorRole.MOCK: generalist_payload,
+    EvaluatorRole.DETERMINISTIC: generalist_payload,
     EvaluatorRole.MERCHANT_CLAIM: merchant_claim_payload,
     EvaluatorRole.CREDIT_TERMS: credit_terms_payload,
     EvaluatorRole.AUTHORITY: authority_payload,

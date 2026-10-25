@@ -99,7 +99,7 @@ def test_valid_response_becomes_an_ok_verdict_with_usage_and_cost():
     provider = reply(analysis_json("REVIEW", risk_score=0.7), usage={"prompt_tokens": 1000, "completion_tokens": 200})
     verdict = evaluate(provider, price_input_per_mtok=Decimal(3), price_output_per_mtok=Decimal(15))
     assert verdict.status is EvaluatorStatus.OK and verdict.verdict is Decision.REVIEW
-    assert verdict.prompt_version == "generalist-v1" and verdict.model_id == "test-model"
+    assert verdict.prompt_version == "generalist-v4" and verdict.model_id == "test-model"
     (call,) = verdict.calls
     assert (call.status, call.prompt_tokens, call.completion_tokens) == (CallStatus.OK, 1000, 200)
     assert call.cost == Decimal("0.006") and call.latency_ms >= 0

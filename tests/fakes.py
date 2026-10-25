@@ -13,6 +13,7 @@ from sika_guard.evaluators.llm import LLMClient, LLMConfig
 SECRET = "sk-test-SECRET-do-not-leak"
 ROLE_MARKERS = {
     "generalist": "general-purpose financial-security analyst",
+    "rubric_generalist": "rubric-based financial-security analyst",
     "merchant_claim": "merchant-claim analyst",
     "credit_terms": "credit-terms analyst",
     "authority": "authority analyst",

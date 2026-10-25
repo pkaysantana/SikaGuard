@@ -16,11 +16,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 
-from sika_guard.coordinator import CaseRecord, Condition, CoordinatorConfig, Coverage, coordinate
+from sika_guard.coordinator import AGGREGATION_POLICY, CaseRecord, Condition, CoordinatorConfig, Coverage, coordinate
+from sika_guard.evaluators.adjudicate import AllegationStatus, FindingEffect
 from sika_guard.evaluators.contract import CallRecord, Evaluator, EvaluatorStatus
 from sika_guard.evaluators.crosscheck import CrossCheckOutcome
 from sika_guard.labels import GroundTruth
-from sika_guard.models import Case, Decision
+from sika_guard.models import Case, Decision, DecisionBasis
 
 P95_MIN_SAMPLES = 20  # below this a p95 is just the maximum, so only descriptive figures are shown
 
@@ -118,12 +119,34 @@ def _tally(c: Counter) -> str:
 # --- Report -----------------------------------------------------------------
 
 
+def _adjudication_lines(records: Sequence[CaseRecord]) -> list[str]:
+    findings = [a for r in records for a in r.adjudications]
+    counts = Counter(a.status for a in findings)
+    treatments = [t for r in records for t in r.verdict_treatments]
+    ignored = [t for t in treatments if t.counted_as is not t.model_verdict]
+    normalised = [v for r in records for v in r.verdicts if v.normalised]
+    effects = Counter(a.effect for r in records for a in r.adjudications)
+    bases = Counter(b for r in records for b in r.decision_bases)
+    return [
+        "Decision bases (final; a review for an unmet evidence requirement is not a verified contradiction): "
+        + " ".join(f"{b.value}={bases[b]}" for b in DecisionBasis),
+        "Finding effects (only a verified, material finding can support REVIEW): " + " ".join(f"{e.value}={effects[e]}" for e in FindingEffect),
+        f"Model errors logged (findings contradicted by authenticated structured facts; no enforcement effect): {effects[FindingEffect.MODEL_ERROR]}",
+        "Finding adjudication by trusted code (a model's allegation is not a fact until code confirms it): "
+        + " ".join(f"{s.value}={counts[s]}" for s in AllegationStatus),
+        f"Verdicts whose escalation was ignored because every finding was contradicted by structured data: {len(ignored)} of {len(treatments)}",
+        f"Replies repaired for over-long display text only (originals kept; never applied to amounts, ids, codes or quotes): {len(normalised)}",
+    ]
+
+
 def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, show_cases: bool = False) -> str:
     records = [s.record for s in scored]
     n = len(scored)
     out = [f"Sika Guard - Condition {meta.condition.value} ({_CONDITION_NAMES[meta.condition]})"]
     if meta.is_live:
         out.append("Mode: LIVE model inference")
+    elif meta.condition is Condition.A_PLUS:
+        out.append("Mode: DETERMINISTIC SCANNER. No model is involved; this is a real baseline (not a mock) showing what plain parsing of the same passages finds.")
     else:
         out.append(f"Mode: OFFLINE MOCK ({meta.mode.split(':', 1)[-1]}). Scripted evaluators, NOT model output; this checks the plumbing only.")
     for e in meta.evaluators:
@@ -131,6 +154,7 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
     if meta.llm:
         out.append("  provider config: " + ", ".join(f"{k}={v}" for k, v in meta.llm.items()))
     out.append(f"  policy: {', '.join(f'{k}={v}' for k, v in meta.policy.items())}; fail_closed={meta.fail_closed}")
+    out.append(f"  aggregation (shared by every AI condition; no vote, no risk scores): {AGGREGATION_POLICY}")
     out += [
         f"Cases: {n} hand-authored synthetic fixtures. Not a representative benchmark; every figure below is descriptive.",
         "No comparison with a matched-compute single-model baseline has been made.",
@@ -159,7 +183,7 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
     blocks = [r for r in records if r.deterministic_decision is Decision.BLOCK]
     out += [f"Deterministic BLOCKs preserved: {sum(r.final_decision is Decision.BLOCK for r in blocks)} of {len(blocks)}", ""]
 
-    out.append("Evaluator outcomes (status is explicit; nothing is dropped)")
+    out.append("Evaluator outcomes (failures are classified separately from attack findings; nothing is dropped)")
     for evaluator_id in dict.fromkeys(v.evaluator_id for r in records for v in r.verdicts):
         verdicts = [v for r in records for v in r.verdicts if v.evaluator_id == evaluator_id]
         verdict_counts = Counter(v.verdict for v in verdicts if v.usable)
@@ -179,6 +203,8 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
     out += [
         "Trusted cross-checks of model-extracted claims: " + (" ".join(f"{o.value}={checks[o]}" for o in CrossCheckOutcome) if checks else "none extracted"),
         f"Model contradiction allegations not confirmed by deterministic code: {sum(len(r.uncorroborated_contradictions) for r in records)}",
+        f"Model limit-exceeded allegations contradicted by the deterministic limit checks: {sum(len(r.unsupported_limit_allegations) for r in records)}",
+        *_adjudication_lines(records),
         f"Cases escalated by the AI layer (final stricter than deterministic): {sum(r.escalated_by_ai for r in records)}",
         "",
         "Latency",
@@ -197,6 +223,16 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
     if not calls:
         out.append("  no model calls, so no usage")
     else:
+        providers = Counter(c.provider or "not exposed" for c in calls)
+        returned = Counter(c.returned_model or "not reported" for c in calls)
+        out.append(
+            f"  requested model(s): {', '.join(sorted({c.model for c in calls}))}; returned model(s): "
+            + ", ".join(f"{m} x{n}" for m, n in sorted(returned.items()))
+        )
+        out.append(
+            "  upstream provider(s) exposed by the endpoint: " + ", ".join(f"{p} x{n}" for p, n in sorted(providers.items()))
+            + (" - the provider varied across calls, a reproducibility limitation (not controlled)" if len(providers) > 1 else "")
+        )
         with_tokens = [c for c in calls if c.prompt_tokens is not None and c.completion_tokens is not None]
         priced = [c for c in calls if c.cost is not None]
         out.append(
@@ -207,6 +243,15 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
             out.append(f"  cost on {len(priced)} of {len(calls)} calls, in the units of the configured prices: {sum((c.cost for c in priced), Decimal(0)):.6f}")
         else:
             out.append("  cost: not reported (pricing not configured, or the provider returned no token counts)")
+        # A separate figure: the provider's own number, unit undocumented. It is never added to the line above.
+        provider_priced = [c for c in calls if c.provider_cost is not None]
+        if provider_priced:
+            out.append(
+                f"  provider-reported usage.cost on {len(provider_priced)} of {len(calls)} calls: "
+                f"{sum((c.provider_cost for c in provider_priced), Decimal(0)):.7f} (unit UNKNOWN; not a computed cost and not added to it)"
+            )
+        else:
+            out.append("  provider-reported usage.cost: none returned")
 
     if show_cases:
         out += ["", "Per case (* = final differs from the fixture's ideal decision)"]
@@ -224,7 +269,10 @@ def format_experiment_report(meta: RunMetadata, scored: Sequence[Scored], *, sho
 
 _CONDITION_NAMES = {
     Condition.A: "deterministic baseline",
+    Condition.A_PLUS: "deterministic baseline plus a non-LLM scanner of the same source passages",
     Condition.B: "one general-purpose analyst plus deterministic baseline",
+    Condition.B3: "three independent samples of the general-purpose analyst plus deterministic baseline",
+    Condition.BC: "one analyst applying all three specialist rubrics plus deterministic baseline",
     Condition.C: "three concurrent specialists plus deterministic baseline",
 }
 

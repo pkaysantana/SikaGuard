@@ -1,0 +1,221 @@
+{
+ "F6": {
+  "advertised_total_in_USD_on_a_GBP_schedule": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "advertised_currency_incompatible"
+   ]
+  }
+ },
+ "F7": {
+  "rule_engine_only": {
+   "bases": [
+    "block_hard_violation"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "BLOCK",
+   "final": "BLOCK",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  }
+ },
+ "R1": {
+  "back_dated_proposal_makes_fresh_contradicting_evidence_irrelevant": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted",
+    "offer_reported_unavailable"
+   ]
+  },
+  "expired_mandate_but_the_agent_back_dates_the_proposal_into_its_window": {
+   "authorised": false,
+   "decision": "BLOCK",
+   "findings": [
+    "mandate_expired"
+   ]
+  },
+  "same_case_with_an_honest_proposal_time": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted",
+    "offer_reported_unavailable"
+   ]
+  }
+ },
+ "R10": {
+  "a_manifest_digest_that_names_no_manifest": "refused (ManifestBindingError: the declared manifest digest names no recorded, untampered manifest)",
+  "the_initial_manifest_whose_frozen_files_no_longer_match_the_tree": "refused (ManifestBindingError: manifest-0001-initial.json does not describe the code that is running (the frozen core, a )"
+ },
+ "R2": {
+  "credit_agreement_declared_as_card_purchase_under_a_card_only_mandate": {
+   "authorised": false,
+   "decision": "BLOCK",
+   "findings": [
+    "scope_not_permitted",
+    "scope_offer_mismatch"
+   ]
+  }
+ },
+ "R3": {
+  "mandate_issued_to_a_different_agent": {
+   "authorised": false,
+   "decision": "BLOCK",
+   "findings": [
+    "agent_mismatch"
+   ]
+  }
+ },
+ "R4": {
+  "rule_engine": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": [
+    "advertised_total_overstated"
+   ]
+  },
+  "with_a_model_extracted_claim_of_the_advertised_figure": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:discrepant_not_adverse"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [
+    "rule_engine:advertised_total_overstated:OFFER-A",
+    "crosscheck:discrepant_not_adverse:mock-scripted:OFFER-A:total_repayable"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "R5": {
+  "curly_quotation_marks": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "fullwidth_digits": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "no_break_space": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "zero_width_space_inside_a_word": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "R7": {
+  "assertion_carries_a_subject_field": true,
+  "merchant_says_the_customer_cannot_have_A_lender_says_the_product_exists": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "decision_critical_claim_uncorroborated",
+    "eligibility_unresolved"
+   ]
+  }
+ },
+ "R8": {
+  "claim_dated_one_day_after_the_decision": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "impossible_timestamp",
+    "offer_reported_unavailable"
+   ]
+  },
+  "honest_claim_time": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted",
+    "offer_reported_unavailable"
+   ]
+  }
+ },
+ "R9": {
+  "aggregator_newer_than_the_lender_who_disagrees": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "evidence_conflict"
+   ]
+  },
+  "lender_newer_than_the_aggregator_who_disagrees": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted",
+    "costlier_than_usable_offer"
+   ]
+  }
+ }
+}

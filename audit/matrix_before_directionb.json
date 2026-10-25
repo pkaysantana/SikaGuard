@@ -1,0 +1,200 @@
+{
+ "F6": {
+  "advertised_total_in_USD_on_a_GBP_schedule": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": [
+    "advertised_currency_incompatible"
+   ]
+  }
+ },
+ "F7": {
+  "rule_engine_only": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  }
+ },
+ "R1": {
+  "back_dated_proposal_makes_fresh_contradicting_evidence_irrelevant": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": [
+    "no_independent_evidence"
+   ]
+  },
+  "expired_mandate_but_the_agent_back_dates_the_proposal_into_its_window": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": []
+  },
+  "same_case_with_an_honest_proposal_time": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted"
+   ]
+  }
+ },
+ "R10": {
+  "a_manifest_digest_that_names_no_manifest": "SEALED",
+  "the_initial_manifest_whose_frozen_files_no_longer_match_the_tree": "SEALED"
+ },
+ "R2": {
+  "credit_agreement_declared_as_card_purchase_under_a_card_only_mandate": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": []
+  }
+ },
+ "R3": {
+  "mandate_issued_to_a_different_agent": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": []
+  }
+ },
+ "R4": {
+  "rule_engine": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": []
+  },
+  "with_a_model_extracted_claim_of_the_advertised_figure": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "R5": {
+  "curly_quotes_and_dashes": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "coverage": "unavailable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [
+    "evaluator_failure:mock-scripted:invalid_response"
+   ],
+   "verdict_statuses": [
+    "invalid_response"
+   ]
+  },
+  "fullwidth_digits": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "coverage": "unavailable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [
+    "evaluator_failure:mock-scripted:invalid_response"
+   ],
+   "verdict_statuses": [
+    "invalid_response"
+   ]
+  },
+  "no_break_space": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "zero_width_space_inside_a_word": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "coverage": "unavailable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [
+    "evaluator_failure:mock-scripted:invalid_response"
+   ],
+   "verdict_statuses": [
+    "invalid_response"
+   ]
+  }
+ },
+ "R7": {
+  "assertion_carries_a_subject_field": false,
+  "merchant_says_the_customer_cannot_have_A_lender_says_the_product_exists": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted",
+    "costlier_than_usable_offer"
+   ]
+  }
+ },
+ "R8": {
+  "claim_dated_one_day_after_the_decision": {
+   "authorised": true,
+   "decision": "ALLOW",
+   "findings": [
+    "evidence_stale"
+   ]
+  },
+  "honest_claim_time": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "availability_contradicted"
+   ]
+  }
+ },
+ "R9": {
+  "aggregator_newer_than_the_lender_who_disagrees": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "evidence_conflict"
+   ]
+  },
+  "lender_newer_than_the_aggregator_who_disagrees": {
+   "authorised": true,
+   "decision": "REVIEW",
+   "findings": [
+    "evidence_conflict"
+   ]
+  }
+ }
+}

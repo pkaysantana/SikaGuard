@@ -1,0 +1,517 @@
+{
+  "aggregation": {
+    "fail_closed_default": false,
+    "policy": "max_severity_of_adjudicated_verdicts",
+    "rule": "any single enforcing route counts: a verified and material finding, a trusted-code contradiction of the selected offer's lender terms, or (only if fail_closed) an evaluator failure. No vote, no risk score."
+  },
+  "conditions": {
+    "A": {
+      "description": "deterministic rule engine only; no model is called",
+      "evaluators": []
+    },
+    "B": {
+      "description": "baseline plus one general-purpose analyst, one call per case",
+      "evaluators": [
+        {
+          "evaluator_id": "generalist",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v3",
+          "role": "generalist",
+          "system_prompt_sha256": "4c9e4436ee5b13bd74344e630c28f972eeccf30b8e687e22f7a52b223682eabe"
+        }
+      ]
+    },
+    "B3": {
+      "description": "baseline plus three independent calls of the same general-purpose analyst (the same number of calls as C; compute is not claimed to match)",
+      "evaluators": [
+        {
+          "evaluator_id": "generalist_1",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v3",
+          "role": "generalist",
+          "system_prompt_sha256": "4c9e4436ee5b13bd74344e630c28f972eeccf30b8e687e22f7a52b223682eabe"
+        },
+        {
+          "evaluator_id": "generalist_2",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v3",
+          "role": "generalist",
+          "system_prompt_sha256": "4c9e4436ee5b13bd74344e630c28f972eeccf30b8e687e22f7a52b223682eabe"
+        },
+        {
+          "evaluator_id": "generalist_3",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v3",
+          "role": "generalist",
+          "system_prompt_sha256": "4c9e4436ee5b13bd74344e630c28f972eeccf30b8e687e22f7a52b223682eabe"
+        }
+      ]
+    },
+    "Bc": {
+      "description": "baseline plus one analyst applying all three specialist rubrics in one call (given the same information as C)",
+      "evaluators": [
+        {
+          "evaluator_id": "rubric_generalist",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "rubric-generalist-v3",
+          "role": "rubric_generalist",
+          "system_prompt_sha256": "e343a6d2f6a3a74a328f9f09a10b2679a4508fa043881c5eaecad6e52cb7f268"
+        }
+      ]
+    },
+    "C": {
+      "description": "baseline plus three concurrent specialist analysts (merchant claims, credit terms, authority)",
+      "evaluators": [
+        {
+          "evaluator_id": "merchant_claim",
+          "payload_builder": "merchant_claim_payload",
+          "prompt_version": "merchant-claim-v3",
+          "role": "merchant_claim",
+          "system_prompt_sha256": "e9d692524b4e4d56203fa1f3d64921e1db1f78b12e69c45271a29e9c3365e978"
+        },
+        {
+          "evaluator_id": "credit_terms",
+          "payload_builder": "credit_terms_payload",
+          "prompt_version": "credit-terms-v3",
+          "role": "credit_terms",
+          "system_prompt_sha256": "fe0dbcf2102259d026fb9a6028cf593001675f9aff42c96dd432e6d1e1793104"
+        },
+        {
+          "evaluator_id": "authority",
+          "payload_builder": "authority_payload",
+          "prompt_version": "authority-v3",
+          "role": "authority",
+          "system_prompt_sha256": "bff61902f7784a30b6f3f638d51c36ece578f1a7bcfde07c2361ebd71a580113"
+        }
+      ]
+    }
+  },
+  "created_utc": "2026-10-24T22:31:27.598877+00:00",
+  "decision_policy": {
+    "deterministic_materiality_assumptions": {
+      "status": "provisional policy assumptions; not tuned on any held-out data",
+      "units": {
+        "*_gap_minor": "minor currency units (pence, cents)",
+        "max_evidence_age": "seconds"
+      },
+      "values": {
+        "evidence_requirement_gap_minor": 500,
+        "material_gap_minor": 500,
+        "max_evidence_age": 3600.0,
+        "require_corroboration": true,
+        "stale_evidence_counts_as_uncorroborated": true
+      }
+    },
+    "document": "DECISION_POLICY.md",
+    "document_sha256": "2d6b7190e1e79515d38e5ab0842e976311e500868bfaca710ee9190450bdf72a",
+    "rule_engine_sha256": "a03f9e67ee9512c77406c829962ea24fd762fe9c22e45b56241e58dba7fcad04"
+  },
+  "dependencies": {
+    "anyio": "4.15.1",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "pydantic": "2.14.1",
+    "pydantic_core": "2.50.1",
+    "pytest": "9.1.1"
+  },
+  "digest": "005dbc0bba45569a8880e81753983cfcad72af602df6e2fe6890573679e71533",
+  "files": {
+    "BENCHMARK_SPEC.md": {
+      "group": "document",
+      "sha256": "4274805e9aba54ec564a9301dab7acd42a9962f7a514c8a1d3339a67d50f868b"
+    },
+    "CLAUDE.md": {
+      "group": "document",
+      "sha256": "9b4a8fb27870a4b58fc5ae348d25ecf04dfa788d4b10c67dd241f8f0ff68c9bd"
+    },
+    "DECISION_POLICY.md": {
+      "group": "document",
+      "sha256": "2d6b7190e1e79515d38e5ab0842e976311e500868bfaca710ee9190450bdf72a"
+    },
+    "README.md": {
+      "group": "document",
+      "sha256": "d376825c1534d58ec53b3ec5804c7d63a00cddbc30648ec285f382ee3814f30e"
+    },
+    "pyproject.toml": {
+      "group": "project_config",
+      "sha256": "02d7ef73bdf14b0fab6a7946af11713f758ff185777b184c3e5384e872f19a1d"
+    },
+    "src/sika_guard/__init__.py": {
+      "group": "source_other",
+      "sha256": "a909a51ae137f7111e671150a1468b6f0184e0245c5847ea5a946eff2e499859"
+    },
+    "src/sika_guard/benchmark/__init__.py": {
+      "group": "benchmark_tooling",
+      "sha256": "265dd1285f09f51ef0d5b608c6c76f19bd51afa806f6cfee712ab2c67313714b"
+    },
+    "src/sika_guard/benchmark/__main__.py": {
+      "group": "benchmark_tooling",
+      "sha256": "2b94cef0de0101f3ecb0740fcd059c3b4893a07cf2c292d6e7b2e3e2faa8740f"
+    },
+    "src/sika_guard/benchmark/audit.py": {
+      "group": "benchmark_tooling",
+      "sha256": "50e6f9933d7699646194c7fea3c5cdf1fbf4bf4afcf4de334616ca9295cc459b"
+    },
+    "src/sika_guard/benchmark/decisions.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a3eab5c98e074967fbbead5b4ff30ef45506a1e2dbcde57183dfe081dab3d23e"
+    },
+    "src/sika_guard/benchmark/hidden.py": {
+      "group": "benchmark_tooling",
+      "sha256": "9d037baeedfa569241ec12b55fd9a23242cc514c58afdc3bdbf54549e53f38fc"
+    },
+    "src/sika_guard/benchmark/ids.py": {
+      "group": "benchmark_tooling",
+      "sha256": "27b5092f8b68eeeec93b8c74bae0a6b5c3e2455e16241bd578b7636c9c0a1a4d"
+    },
+    "src/sika_guard/benchmark/independent.py": {
+      "group": "benchmark_tooling",
+      "sha256": "479d572fc0eace8c656e6c39b1c3e718b1c9545d97aeaca3488b94f063a5c613"
+    },
+    "src/sika_guard/benchmark/leakage.py": {
+      "group": "benchmark_tooling",
+      "sha256": "58fa1916d5414ef6c844b6e146c16eed9802b8269bff32bd0f79a3f6117efe8d"
+    },
+    "src/sika_guard/benchmark/manifest.py": {
+      "group": "benchmark_tooling",
+      "sha256": "790f19f55941f3b070644fcc3d607f4e1973ca02ae464a2bcbb1843757d8704f"
+    },
+    "src/sika_guard/benchmark/mockrun.py": {
+      "group": "benchmark_tooling",
+      "sha256": "490dbe4ac07796a1c906d3435abc08c4c7d4443172ee1d5cbb44bfbaffc1dc6b"
+    },
+    "src/sika_guard/benchmark/offline.py": {
+      "group": "benchmark_tooling",
+      "sha256": "3d0cd952a50472fb185e94e26666949f8e27ba125523355279e2e660447e2818"
+    },
+    "src/sika_guard/benchmark/pilot.py": {
+      "group": "benchmark_tooling",
+      "sha256": "7532cfd000e7a73730d365fceba9d2a5699cf4d0cc4e29682dec230db34e612d"
+    },
+    "src/sika_guard/benchmark/quotas.py": {
+      "group": "benchmark_tooling",
+      "sha256": "7dfdde76398a9fda9d1e9e9b5c324da8f602ed5e69b0b68e76eaecad7417d518"
+    },
+    "src/sika_guard/benchmark/runner.py": {
+      "group": "benchmark_tooling",
+      "sha256": "ca155009de031be26cec618e70b3e961ab20194ac0b82947a7e2db625d971756"
+    },
+    "src/sika_guard/benchmark/scoring.py": {
+      "group": "benchmark_tooling",
+      "sha256": "35070d657e2acf6b8d2149bc8af88873f2614960853b527698abfcff20d3a521"
+    },
+    "src/sika_guard/benchmark/seal.py": {
+      "group": "benchmark_tooling",
+      "sha256": "3358e70a480417f8aa1dbf77413d52b2e5e741707850e16fba8eeb5e63e62496"
+    },
+    "src/sika_guard/benchmark/stats.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a6eda117e5cc6323c9a7224028501247096824bb4da0eaf74bc470463eeb38d4"
+    },
+    "src/sika_guard/benchmark/summary.py": {
+      "group": "benchmark_tooling",
+      "sha256": "323b0fb0dbb30cae433f9eb4865282dc4fd9fcf7332954c535bd395debd383b2"
+    },
+    "src/sika_guard/benchmark/validate.py": {
+      "group": "benchmark_tooling",
+      "sha256": "fc2522dce49c09be8ffebd7d7c95e8abde07eede50cc6346532ac44ea439cb5a"
+    },
+    "src/sika_guard/benchmark/visible.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a7a278478c393d53a8e779ef43cbef850abe831730d129ecf0818a9577645e75"
+    },
+    "src/sika_guard/coordinator.py": {
+      "group": "frozen_core",
+      "sha256": "a734c645a68b3edfb00b05b6ffe281b8553b8f6daee7f19f52c6c1e8f5535e0d"
+    },
+    "src/sika_guard/evaluate.py": {
+      "group": "frozen_core",
+      "sha256": "c3cf7947970bf3b3bfe4da9d8023f1f5245d4184bb7a63c7d2e76b81af8b8986"
+    },
+    "src/sika_guard/evaluators/__init__.py": {
+      "group": "source_other",
+      "sha256": "3bc552cc5f897c263da9157b427a41961afd1642c98e92c6d32a148ac9b84169"
+    },
+    "src/sika_guard/evaluators/adjudicate.py": {
+      "group": "frozen_core",
+      "sha256": "6162e59be0082f8d893d246f9d2d7a87f46cd25c1c62347045e5bb92af353cbe"
+    },
+    "src/sika_guard/evaluators/amounts.py": {
+      "group": "frozen_core",
+      "sha256": "66a87fe22e3797a83c2e7ddfbf1dd48bba15f121d128e9510403abbeb49cf889"
+    },
+    "src/sika_guard/evaluators/contract.py": {
+      "group": "frozen_core",
+      "sha256": "d60d2de73efb86718d451b29a40f6dc4d50ccc84f1561820a2fd2c7bc85f67df"
+    },
+    "src/sika_guard/evaluators/crosscheck.py": {
+      "group": "frozen_core",
+      "sha256": "7575220e22b0b36055446ca42cd877860bff00aa2f6141fa0b377ee438827e3a"
+    },
+    "src/sika_guard/evaluators/grounding.py": {
+      "group": "frozen_core",
+      "sha256": "29f7b2a43c2dd5a48e9e65a3c68b92560f5896f8e05a1e42ee419db29fd3bbba"
+    },
+    "src/sika_guard/evaluators/llm.py": {
+      "group": "frozen_core",
+      "sha256": "ed4999af55b25024d57271fba6104ffe0e6d53e58dae062ef029450c8a81696b"
+    },
+    "src/sika_guard/evaluators/mocks.py": {
+      "group": "frozen_core",
+      "sha256": "84a1b1ecb6f9a15739a278736b5d02cf8f66cf33715e2fc9628c55fff82f1540"
+    },
+    "src/sika_guard/evaluators/payloads.py": {
+      "group": "frozen_core",
+      "sha256": "dba891e9392eeefb362b4483e264064f3aef74687ce7c78701c22c5a93948640"
+    },
+    "src/sika_guard/evaluators/prompts.py": {
+      "group": "frozen_core",
+      "sha256": "238b327da2b579803150822f33525f690f698015a61b62e46d19bb49547a2c19"
+    },
+    "src/sika_guard/experiment.py": {
+      "group": "frozen_core",
+      "sha256": "6e8dc99c427b0910981cc11a3b3b61eaf2aa8cc85fce6ccbebe39e724653829f"
+    },
+    "src/sika_guard/fixtures/__init__.py": {
+      "group": "source_other",
+      "sha256": "3bcf37580b9dfc106695375ac57a07a536bd3bdb7ca7f5d8bfd85ffc0e04e11e"
+    },
+    "src/sika_guard/fixtures/builders.py": {
+      "group": "development_data",
+      "sha256": "0e26e8683cdc3eb37e93fc5f74e068dc9f55ab6330b25eeb63f1c00ee5db27b9"
+    },
+    "src/sika_guard/fixtures/cases.py": {
+      "group": "development_data",
+      "sha256": "e876847d79461f11cad4fc705c752cae3d395f1998c6c33f1af48b848ffd798c"
+    },
+    "src/sika_guard/fixtures/labels.py": {
+      "group": "development_data",
+      "sha256": "fb6e9829a7b411636f687be86d7b17d172c3fa2d1da642081e19cc54c169d1ae"
+    },
+    "src/sika_guard/labels.py": {
+      "group": "development_data",
+      "sha256": "fc828022cf8a42da3b5dea1e0d02bb207618464309439c9a91901eceadf76074"
+    },
+    "src/sika_guard/models.py": {
+      "group": "frozen_core",
+      "sha256": "deb6c7cef0fd29ebb3472bed7d08a634e3a560d487d77ea66bc28ae2e2f0492b"
+    },
+    "src/sika_guard/money.py": {
+      "group": "frozen_core",
+      "sha256": "0dcffef5ba4c943ec0ec6fb0091333f0b768d12744433c7c3c68ef8b2c8b9374"
+    },
+    "src/sika_guard/policy.py": {
+      "group": "frozen_core",
+      "sha256": "a03f9e67ee9512c77406c829962ea24fd762fe9c22e45b56241e58dba7fcad04"
+    },
+    "tests/audit_benchmark_scenarios.py": {
+      "group": "tests",
+      "sha256": "0656a288f62de390bd5d535777f74c509064935ec73c94a6e4961ff32525bc0b"
+    },
+    "tests/audit_scenarios.py": {
+      "group": "tests",
+      "sha256": "4fd45f0d4fb2fbff0fcaada543641d8307b85734cb38938c2bdc01878236eed1"
+    },
+    "tests/data/recorded_replies.json": {
+      "group": "development_data",
+      "sha256": "e3d604a7346fe12d68bc01cccd98f616303295641d5c1a78241a7f2180b02225"
+    },
+    "tests/fakes.py": {
+      "group": "tests",
+      "sha256": "f22dd552ce4455f369a8e6cd3c1f8f3895c514ca117d481de4e7d99c70a86c6d"
+    },
+    "tests/test_adjudication.py": {
+      "group": "tests",
+      "sha256": "45d0c089a161f463b76a65965041d35a9acf7a11a61c1434fe231a092e1360c6"
+    },
+    "tests/test_audit_amounts.py": {
+      "group": "tests",
+      "sha256": "77c0fbae7c5f099246721a05895485838e208367745c070ec84bae471da3f218"
+    },
+    "tests/test_audit_benchmark.py": {
+      "group": "tests",
+      "sha256": "26ea7fde0bc5cdbb06da8a329c97e0ec1b01cc94f6f7cbc086b562d9cd705f0b"
+    },
+    "tests/test_audit_regressions.py": {
+      "group": "tests",
+      "sha256": "7caa150a3f9e7ba29e40499cc2eae56ecc4f154414d33adfe0654042f0ca05d5"
+    },
+    "tests/test_benchmark_docs.py": {
+      "group": "tests",
+      "sha256": "50b196412bb9678589ea917d621201c9b7b9bd454d611283c3f7992c9f4d0ecc"
+    },
+    "tests/test_benchmark_leakage.py": {
+      "group": "tests",
+      "sha256": "3971d7fcb82f6fc56fdccdf60a228771386a2afe1fe1dc4a6550a022b65e3616"
+    },
+    "tests/test_benchmark_manifest.py": {
+      "group": "tests",
+      "sha256": "91129457429b421cf235bec6850898f45707e1253dad21793fb7b357deb44921"
+    },
+    "tests/test_benchmark_schema.py": {
+      "group": "tests",
+      "sha256": "3b8b899fbdda957a416210d914506c10e002e711b51187f593eda7b1ac32e76e"
+    },
+    "tests/test_benchmark_scoring.py": {
+      "group": "tests",
+      "sha256": "62377ca8612b2cbc4f929a045835abbaee24b2bd19bde8d823b12ca80097637f"
+    },
+    "tests/test_benchmark_validation.py": {
+      "group": "tests",
+      "sha256": "fa34bd086cfaab363e592fcfe585b532b20cc7239526d2ce5d109ded24a1551d"
+    },
+    "tests/test_condition_c.py": {
+      "group": "tests",
+      "sha256": "4dbb109dceb66907680327adc8461c257a903f7779bdbc2a64cebc89d960b113"
+    },
+    "tests/test_conditions_b3_bc.py": {
+      "group": "tests",
+      "sha256": "ad4000baee55d0394b1d1a48577d729f7dc0769df3297e6fe3784a80adff6a46"
+    },
+    "tests/test_contract_repair.py": {
+      "group": "tests",
+      "sha256": "fbcc220804be50cee205d0ff8f3413de35ffe17b66b70456d615801619de4931"
+    },
+    "tests/test_coordinator.py": {
+      "group": "tests",
+      "sha256": "488262a4f6c5fb8c4e9c07e197fe2c4c92870ea72c13c55ff03b3d2bdc823d5f"
+    },
+    "tests/test_decision_policy.py": {
+      "group": "tests",
+      "sha256": "578c1425437bf98dcf72d77f19c00cc631c6b27e3ae2df26dcee6b336644bc45"
+    },
+    "tests/test_evaluator_contract.py": {
+      "group": "tests",
+      "sha256": "6d8dfe997555a8eb863cd8f395ccad0463b655699ac57e4f91862fa7fae9d98c"
+    },
+    "tests/test_experiment.py": {
+      "group": "tests",
+      "sha256": "23ea09ae182dbab85aa20ac1aaa5a363ad53d968654d97b66d2de3a29113b460"
+    },
+    "tests/test_fixtures.py": {
+      "group": "tests",
+      "sha256": "8085bcd61f3a468278fbd5e54c063baafbb69236b4df17637b93527bade2d608"
+    },
+    "tests/test_flagship.py": {
+      "group": "tests",
+      "sha256": "823a1f82eda90840790f283780e84444ef5d4fb626f68ac922b4a4858123e305"
+    },
+    "tests/test_llm.py": {
+      "group": "tests",
+      "sha256": "37e318e1ff80adaa1496fba923407691fa65586447a0583f0b320e8cb9325f88"
+    },
+    "tests/test_money.py": {
+      "group": "tests",
+      "sha256": "df02b2577aa726da1824e094a3b1e5ebe713a75f394e5f1787e443baebeea657"
+    },
+    "tests/test_policy.py": {
+      "group": "tests",
+      "sha256": "8c933a6eb2a88494e0e562fb20d34980118167c4bccdfc6e3f8685f7b3e3a2d5"
+    }
+  },
+  "ground_truth_isolation": {
+    "hidden_modules": [
+      "sika_guard.labels",
+      "sika_guard.fixtures.labels",
+      "sika_guard.benchmark.hidden"
+    ],
+    "inference_side_modules_that_must_not_import_them": [
+      "sika_guard.policy",
+      "sika_guard.coordinator",
+      "sika_guard.evaluators.*",
+      "sika_guard.benchmark.visible",
+      "sika_guard.benchmark.decisions",
+      "sika_guard.benchmark.seal"
+    ],
+    "requirements": [
+      "labels live in a separate file and module and are joined only after the decision log is sealed",
+      "case ids are opaque and carry no information about family, label or split",
+      "no label field name, family name, policy vocabulary or canary string appears in any request",
+      "merchant text stays under untrusted_merchant_content, never in a system prompt"
+    ]
+  },
+  "model_configuration_requirements": {
+    "decoding": {
+      "json_mode": true,
+      "temperature": "unset (provider default) unless declared in the run declaration",
+      "timeout_seconds": 60.0
+    },
+    "environment_variables_required": [
+      "SIKA_GUARD_LLM_BASE_URL",
+      "SIKA_GUARD_LLM_API_KEY",
+      "SIKA_GUARD_LLM_MODEL"
+    ],
+    "model_id": "one fixed model id for the entire run; declared in the run declaration; requested and returned ids recorded per call",
+    "retries": "none; failures are recorded as abstentions",
+    "same_for_all_conditions": [
+      "model id",
+      "decoding settings",
+      "authoritative case information",
+      "aggregation rule",
+      "adjudication and decision policy"
+    ],
+    "secrets": "the API key is never recorded in a manifest, a decision log or a report",
+    "uncontrolled": "the upstream provider behind the endpoint may vary between calls; it is recorded per call and reported as a reproducibility limitation, never forced"
+  },
+  "note": "STARTING STATE of the Direction B work, not a freeze. The tree exactly as it stood after audit remediation F1-F13 (836 passed, 1 xfailed; F7 pending) and before any change made for Opus findings R1-R10. Recorded so that later manifests can be compared against it. Not an approved experiment manifest.",
+  "python": {
+    "implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "version": "3.12.10"
+  },
+  "schema": "sika-guard-manifest/1",
+  "working_tree": {
+    "changed_or_untracked_paths": [
+      "AUDIT_TRIAGE.md",
+      "BENCHMARK_AUDIT_PROTOCOL.md",
+      "BENCHMARK_BUILD_GUIDE.md",
+      "BENCHMARK_SPEC.md",
+      "CLAUDE.md",
+      "DECISION_POLICY.md",
+      "README.md",
+      "audit/",
+      "manifests/",
+      "src/sika_guard/benchmark/",
+      "src/sika_guard/coordinator.py",
+      "src/sika_guard/evaluate.py",
+      "src/sika_guard/evaluators/adjudicate.py",
+      "src/sika_guard/evaluators/amounts.py",
+      "src/sika_guard/evaluators/contract.py",
+      "src/sika_guard/evaluators/crosscheck.py",
+      "src/sika_guard/evaluators/grounding.py",
+      "src/sika_guard/evaluators/llm.py",
+      "src/sika_guard/evaluators/mocks.py",
+      "src/sika_guard/evaluators/payloads.py",
+      "src/sika_guard/evaluators/prompts.py",
+      "src/sika_guard/experiment.py",
+      "src/sika_guard/models.py",
+      "src/sika_guard/policy.py",
+      "tests/audit_benchmark_scenarios.py",
+      "tests/audit_scenarios.py",
+      "tests/data/",
+      "tests/fakes.py",
+      "tests/test_adjudication.py",
+      "tests/test_audit_amounts.py",
+      "tests/test_audit_benchmark.py",
+      "tests/test_audit_regressions.py",
+      "tests/test_benchmark_docs.py",
+      "tests/test_benchmark_leakage.py",
+      "tests/test_benchmark_manifest.py",
+      "tests/test_benchmark_schema.py",
+      "tests/test_benchmark_scoring.py",
+      "tests/test_benchmark_validation.py",
+      "tests/test_conditions_b3_bc.py",
+      "tests/test_contract_repair.py",
+      "tests/test_coordinator.py",
+      "tests/test_decision_policy.py",
+      "tests/test_experiment.py",
+      "tests/test_fixtures.py",
+      "tests/test_flagship.py",
+      "tests/test_llm.py"
+    ],
+    "git_available": true,
+    "head": "b19e1d6a9a6aba27e1aaabe46f0cadd2a136b91e",
+    "head_matches_working_tree": false,
+    "note": "when head_matches_working_tree is false, HEAD does not identify the evaluated code; use the file hashes"
+  }
+}

@@ -19,7 +19,7 @@ from sika_guard.evaluators.mocks import AlwaysAllow, AlwaysReview, MalformedResp
 from sika_guard.evaluators.payloads import collect_refs, generalist_payload
 from sika_guard.fixtures.builders import fee, gbp, level, make_case, make_offer
 from sika_guard.fixtures.cases import build_cases, get_case
-from sika_guard.models import Decision, FeeKind
+from sika_guard.models import Decision, DecisionBasis, FeeKind
 from sika_guard.policy import evaluate_case
 
 HARD_BLOCK_CASES = ["case-11", "case-12", "case-13", "case-20"]
@@ -52,12 +52,21 @@ def test_deterministic_block_remains_block_whatever_the_evaluators_say(case_id, 
         assert coordinate_sync(case, [make_evaluator()], fail_closed=fail_closed).final_decision is Decision.BLOCK
 
 
-def test_ai_can_raise_allow_to_review_but_never_to_block():
+def test_ai_can_raise_allow_to_review_only_through_a_verified_route_and_never_to_block():
+    # Route: a claim a model extracted, which trusted code proves contradicts the lender's terms for the selected offer.
+    claim = _claim(ClaimKind.TOTAL_REPAYABLE, "Total repayable £660", amount_minor=66000, currency="GBP")
+    shouted_block = Scripted({"t-free": make_analysis(Decision.BLOCK, risk_score=1.0, claims=[claim])})
+    result = coordinate_sync(_free_text_case(), [shouted_block])
+    assert result.final_decision is Decision.REVIEW and result.escalated_by_ai  # REVIEW, whatever the model shouted
+    assert result.decision_bases == (DecisionBasis.REVIEW_VERIFIED_CONTRADICTION,)
+
+
+def test_a_model_verdict_alone_enforces_nothing_however_loudly_it_is_given():
     case = get_case("case-01")
-    assert coordinate_sync(case, [AlwaysReview()]).final_decision is Decision.REVIEW
-    shouted_block = Scripted({"case-01": make_analysis(Decision.BLOCK, risk_score=1.0)})
-    result = coordinate_sync(case, [shouted_block])
-    assert result.final_decision is Decision.REVIEW and result.escalated_by_ai
+    for verdict in (Decision.REVIEW, Decision.BLOCK):
+        result = coordinate_sync(case, [Scripted({"case-01": make_analysis(verdict, risk_score=1.0)}), AlwaysReview("also")])
+        assert result.final_decision is Decision.ALLOW and not result.escalated_by_ai
+        assert "no enforcement effect" in result.verdict_treatments[0].reason
 
 
 def test_ai_allow_cannot_lower_a_deterministic_review():
@@ -75,7 +84,7 @@ def test_high_confidence_gives_a_finding_no_authority():
     assert result.final_decision is Decision.ALLOW
     assert result.proven_false_offer_ids == ()
     unconfident_but_reviewing = Scripted({"case-01": make_analysis(Decision.REVIEW, risk_score=0.0)})
-    assert coordinate_sync(case, [unconfident_but_reviewing]).final_decision is Decision.REVIEW
+    assert coordinate_sync(case, [unconfident_but_reviewing]).final_decision is Decision.ALLOW  # confidence cuts neither way
 
 
 def test_unverified_claim_is_not_proven_false_by_a_model_allegation():
@@ -85,7 +94,8 @@ def test_unverified_claim_is_not_proven_false_by_a_model_allegation():
     assert "no_independent_evidence" in result.deterministic_finding_codes
     assert result.proven_false_offer_ids == ()
     assert result.uncorroborated_contradictions == ("mock-scripted:OFFER-A",)
-    assert result.final_decision is Decision.REVIEW  # escalated for a human, without a fraud finding
+    assert result.final_decision is Decision.REVIEW  # the rule engine's evidence requirement, not the model's allegation
+    assert DecisionBasis.REVIEW_EVIDENCE_REQUIREMENT in result.decision_bases and DecisionBasis.REVIEW_VERIFIED_CONTRADICTION not in result.decision_bases
 
 
 def test_allegation_matching_a_deterministic_contradiction_is_corroborated():
@@ -113,7 +123,8 @@ def test_failures_are_explicit_abstentions_and_not_evidence_of_fraud(make_evalua
     assert len(result.abstained_evaluators) == 1
     assert result.verdicts[0].abstained and result.verdicts[0].verdict is None
     assert result.proven_false_offer_ids == () and result.uncorroborated_contradictions == ()
-    assert result.final_decision is Decision.ALLOW  # fail-open by default: the rule engine's decision stands
+    assert result.final_decision is evaluate_case(get_case("case-14")).decision  # fail-open by default: the rule engine's decision stands
+    assert DecisionBasis.REVIEW_EVALUATOR_FAILURE not in result.decision_bases  # a failure is not reported as a finding
 
 
 def test_fail_closed_turns_missing_judgement_into_review_without_accusing_anyone():
@@ -132,8 +143,11 @@ def test_disagreement_and_abstention_are_separate_outcomes():
 
 
 def test_there_is_no_majority_vote():
-    result = coordinate_sync(get_case("case-01"), [AlwaysAllow("a"), AlwaysAllow("b"), AlwaysReview("c")], Condition.C)
-    assert result.final_decision is Decision.REVIEW  # a single REVIEW is enough; it is not outvoted
+    claim = _claim(ClaimKind.TOTAL_REPAYABLE, "Total repayable £660", amount_minor=66000, currency="GBP")
+    finder = Scripted({"t-free": make_analysis(Decision.ALLOW, claims=[claim])}, evaluator_id="finder")
+    quiet = [Scripted({"t-free": make_analysis(Decision.ALLOW)}, evaluator_id=f"quiet-{i}") for i in range(2)]
+    result = coordinate_sync(_free_text_case(), [*quiet, finder], Condition.C)
+    assert result.final_decision is Decision.REVIEW  # one verified contradiction is enough; two silent evaluators do not outvote it
 
 
 def test_a_crashing_evaluator_is_recorded_as_a_failure():
@@ -195,18 +209,29 @@ def test_a_claim_contradicted_by_lender_terms_escalates_even_if_the_model_says_a
     assert result.final_decision is Decision.REVIEW and result.proven_false_offer_ids == ("OFFER-A",)
 
 
-def test_an_extraction_whose_quote_is_not_in_the_source_is_discarded():
+def test_an_extraction_whose_quote_is_not_in_the_source_invalidates_the_reply():
     claim = _claim(ClaimKind.NO_ADDITIONAL_FEES, "guaranteed zero fees, honestly")
     result = coordinate_sync(_free_text_case(), [Scripted({"t-free": make_analysis(Decision.ALLOW, claims=[claim])})])
-    assert [c.outcome for c in result.crosschecks] == [CrossCheckOutcome.UNGROUNDED]
-    assert result.final_decision is Decision.ALLOW
+    assert result.verdicts[0].status is EvaluatorStatus.INVALID_RESPONSE and result.crosschecks == ()
+    assert result.final_decision is Decision.ALLOW and result.coverage.value == "unavailable"
+    assert coordinate_sync(_free_text_case(), [Scripted({"t-free": make_analysis(Decision.ALLOW, claims=[claim])})], fail_closed=True).final_decision is Decision.REVIEW
 
 
 def test_a_claim_that_matches_the_lender_terms_is_consistent():
-    claim = _claim(ClaimKind.TOTAL_REPAYABLE, "Total repayable £660", amount_minor=68000, currency="GBP")
-    result = coordinate_sync(_free_text_case(), [Scripted({"t-free": make_analysis(Decision.ALLOW, claims=[claim])})])
+    a = make_offer("OFFER-A", level("55", fees=(fee(FeeKind.ADMINISTRATION, "20"),)), advertised=None, description="Total repayable £680.")
+    case = make_case("t-honest", [a, make_offer("OFFER-B", level("60"))], "OFFER-A")
+    claim = _claim(ClaimKind.TOTAL_REPAYABLE, "Total repayable £680", amount_minor=68000, currency="GBP")
+    result = coordinate_sync(case, [Scripted({"t-honest": make_analysis(Decision.ALLOW, claims=[claim])})])
     assert [c.outcome for c in result.crosschecks] == [CrossCheckOutcome.CONSISTENT]
     assert result.final_decision is Decision.ALLOW
+
+
+def test_a_figure_that_differs_from_its_own_quote_is_a_disagreement_not_a_match():
+    """The quote says £660 and the lender total is £680; the model claims 68000, which the quote does not state."""
+    claim = _claim(ClaimKind.TOTAL_REPAYABLE, "Total repayable £660", amount_minor=68000, currency="GBP")
+    result = coordinate_sync(_free_text_case(), [Scripted({"t-free": make_analysis(Decision.ALLOW, claims=[claim])})])
+    (check,) = result.crosschecks
+    assert check.outcome is CrossCheckOutcome.EXTRACTION_DISAGREES and "660.00 GBP" in check.detail
 
 
 def test_availability_extraction_is_checked_against_deterministic_evidence_rules():
@@ -220,7 +245,7 @@ def test_availability_extraction_is_checked_against_deterministic_evidence_rules
     uncorroborated = get_case("case-14")
     result = coordinate_sync(uncorroborated, [Scripted({"case-14": make_analysis(Decision.ALLOW, claims=[claim])})])
     assert [c.outcome for c in result.crosschecks] == [CrossCheckOutcome.NOT_COMPARABLE]  # absence of evidence is not a contradiction
-    assert result.final_decision is Decision.ALLOW
+    assert result.proven_false_offer_ids == () and result.final_decision is evaluate_case(uncorroborated).decision  # the AI adds nothing
 
 
 def test_extraction_that_misreads_the_structured_assertion_is_discarded():

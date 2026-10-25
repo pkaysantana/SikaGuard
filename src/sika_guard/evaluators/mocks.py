@@ -62,13 +62,15 @@ class _Mock:
         raise NotImplementedError
 
     def _record(self, view: EvaluatorView, analysis: ModelAnalysis) -> EvaluatorVerdict:
+        payload = PAYLOAD_BUILDERS[self.role](view)
         return verdict_from_analysis(
             analysis,
             view,
             evaluator_id=self.evaluator_id,
             role=self.role,
-            allowed_refs=collect_refs(PAYLOAD_BUILDERS[self.role](view)),
+            allowed_refs=collect_refs(payload),
             prompt_version=MOCK_PROMPT_VERSION,
+            payload=payload,
         )
 
 
@@ -141,12 +143,15 @@ class MalformedResponse(_Mock):
 OFFLINE_MODES = ("allow", "review", "timeout", "invalid")
 
 
-def offline_evaluators(mode: str, roles: Iterable[EvaluatorRole]) -> list[_Mock]:
-    """One mock per role, so offline Condition C keeps three separately identified evaluators."""
+def offline_evaluators(mode: str, roles: Iterable[EvaluatorRole], names: Iterable[str] | None = None) -> list[_Mock]:
+    """One mock per evaluator, so offline Conditions B3 and C keep separately identified evaluators.
+    `names` defaults to each role's value; pass the specs' evaluator ids when roles repeat (B3)."""
+    roles = list(roles)
+    names = list(names) if names is not None else [r.value for r in roles]
     factories = {
-        "allow": lambda r: AlwaysAllow(f"mock-allow-{r.value}", r),
-        "review": lambda r: AlwaysReview(f"mock-review-{r.value}", r),
-        "timeout": lambda r: Timeout(f"mock-timeout-{r.value}", r),
-        "invalid": lambda r: MalformedResponse(evaluator_id=f"mock-invalid-{r.value}", role=r),
+        "allow": lambda n, r: AlwaysAllow(f"mock-allow-{n}", r),
+        "review": lambda n, r: AlwaysReview(f"mock-review-{n}", r),
+        "timeout": lambda n, r: Timeout(f"mock-timeout-{n}", r),
+        "invalid": lambda n, r: MalformedResponse(evaluator_id=f"mock-invalid-{n}", role=r),
     }
-    return [factories[mode](role) for role in roles]
+    return [factories[mode](name, role) for name, role in zip(names, roles, strict=True)]

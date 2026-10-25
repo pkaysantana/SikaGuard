@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sika_guard.models import (
+    AvailabilitySubject,
     Case,
     CustomerIntent,
     Evidence,
@@ -19,7 +20,9 @@ from sika_guard.models import (
     ProposedTransaction,
     RepaymentSchedule,
     Scope,
+    SourceDocument,
     SourceKind,
+    TrustedContext,
 )
 from sika_guard.money import Money
 
@@ -28,6 +31,7 @@ T0 = datetime(2026, 1, 15, 10, 0, tzinfo=UTC)  # when the merchant makes its cla
 NOW = T0 + timedelta(minutes=5)  # when the agent proposes the payment
 
 MERCHANT = Merchant(merchant_id="MER-1", name="Sunrise Electronics")
+ACTING_AGENT_ID = "AGENT-1"  # the agent session the trusted context says submitted the proposal (the default mandate is issued to it)
 LENDER_ID = "LND-1"
 LENDER_PAYEE = "PAY-LND-1"
 
@@ -60,6 +64,7 @@ def make_offer(
     description: str = "",
     payee_id: str = LENDER_PAYEE,
     lender_id: str = LENDER_ID,
+    scope: Scope = Scope.CREDIT_AGREEMENT,
 ) -> FinancingOffer:
     return FinancingOffer(
         offer_id=offer_id,
@@ -70,6 +75,7 @@ def make_offer(
         description=description,
         schedule=schedule,
         advertised_total_repayable=schedule.total() if advertised is _AUTO else advertised,
+        scope=scope,
     )
 
 
@@ -114,7 +120,15 @@ def make_transaction(offer: FinancingOffer, **overrides) -> ProposedTransaction:
     return ProposedTransaction(**{**fields, **overrides})
 
 
-def make_assertion(offer_id: str, claims_available: bool, statement: str, *, at: datetime = T0, assertion_id: str = "ASR-1") -> MerchantAssertion:
+def make_assertion(
+    offer_id: str,
+    claims_available: bool,
+    statement: str,
+    *,
+    at: datetime = T0,
+    assertion_id: str = "ASR-1",
+    subject: AvailabilitySubject = AvailabilitySubject.PRODUCT_AVAILABILITY,
+) -> MerchantAssertion:
     return MerchantAssertion(
         assertion_id=assertion_id,
         merchant_id=MERCHANT.merchant_id,
@@ -122,6 +136,7 @@ def make_assertion(offer_id: str, claims_available: bool, statement: str, *, at:
         claims_available=claims_available,
         statement=statement,
         made_at=at,
+        subject=subject,
     )
 
 
@@ -132,8 +147,24 @@ def make_evidence(
     source: EvidenceSource = LENDER_SOURCE,
     at: datetime = T0 + timedelta(minutes=3),
     evidence_id: str = "EV-1",
+    subject: AvailabilitySubject = AvailabilitySubject.PRODUCT_AVAILABILITY,
+    customer_id: str | None = None,
 ) -> Evidence:
-    return Evidence(evidence_id=evidence_id, offer_id=offer_id, offer_available=offer_available, source=source, observed_at=at)
+    return Evidence(
+        evidence_id=evidence_id, offer_id=offer_id, offer_available=offer_available, source=source, observed_at=at,
+        subject=subject, customer_id=customer_id,
+    )
+
+
+def make_document(
+    document_id: str,
+    text: str,
+    *,
+    offer_id: str | None = None,
+    source: EvidenceSource = LENDER_SOURCE,
+    at: datetime = T0 + timedelta(minutes=2),
+) -> SourceDocument:
+    return SourceDocument(document_id=document_id, offer_id=offer_id, source=source, published_at=at, text=text)
 
 
 def make_case(
@@ -145,6 +176,9 @@ def make_case(
     mandate: Mandate | None = None,
     assertions: tuple[MerchantAssertion, ...] = (),
     evidence: tuple[Evidence, ...] = (),
+    documents: tuple[SourceDocument, ...] = (),
+    evaluated_at: datetime | None = None,
+    acting_agent_id: str = ACTING_AGENT_ID,
     **txn_overrides,
 ) -> Case:
     selected = next(o for o in offers if o.offer_id == selected_id)
@@ -155,8 +189,10 @@ def make_case(
         merchant=MERCHANT,
         offers=tuple(offers),
         transaction=make_transaction(selected, **txn_overrides),
+        trusted=TrustedContext(evaluated_at=evaluated_at or txn_overrides.get("proposed_at") or NOW, acting_agent_id=acting_agent_id),
         assertions=assertions,
         evidence=evidence,
+        documents=documents,
     )
 
 

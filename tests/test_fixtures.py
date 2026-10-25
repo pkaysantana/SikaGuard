@@ -49,10 +49,13 @@ def test_baseline_results_are_pinned():
     summary = summarise(run_baseline())
     assert summary.total == 20
     assert (summary.hard_blocked, summary.hard_total) == (4, 4)
-    assert summary.benign_escalated == 0
-    assert [o.case.case_id for o in summary.disagreements] == ["case-15"]  # an uncorroborated false claim is invisible
+    # The evidence requirement (decision policy rule 5) trades one miss for two unnecessary reviews: it catches the
+    # uncorroborated false claim (case-15) but also asks for corroboration of two claims that were in fact true.
+    assert summary.benign_escalated == 2
+    assert [o.case.case_id for o in summary.disagreements] == ["case-14", "case-16"]
     assert (summary.false_claim_confirmed, summary.false_claim_total) == (5, 7)
-    assert (summary.inferior_escalated, summary.inferior_missed) == (6, 1)
+    assert (summary.false_claim_escalated_unconfirmed, summary.false_claim_undetected) == (2, 0)
+    assert (summary.inferior_escalated, summary.inferior_missed) == (7, 0)
 
 
 def test_no_inference_code_can_reach_labels_or_fixtures():

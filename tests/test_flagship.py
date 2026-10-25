@@ -52,7 +52,9 @@ def test_missing_evidence_does_not_prove_the_merchant_lied():
     assert assessment.status is ClaimStatus.UNVERIFIED
     assert not result.has(FindingCategory.CONFIRMED_FALSE_CLAIM)
     assert result.has(FindingCategory.UNVERIFIED_CLAIM)
-    assert result.decision is Decision.ALLOW
+    # Under the evidence-requirement rule the purchase is held for corroboration, but nobody is called a liar.
+    assert result.decision is Decision.REVIEW and result.has(FindingCategory.EVIDENCE_REQUIREMENT_UNMET, material_only=True)
+    assert "not evidence that the merchant is dishonest" in next(f for f in result.findings if f.category is FindingCategory.EVIDENCE_REQUIREMENT_UNMET).message
 
 
 def test_stale_evidence_does_not_establish_current_availability():
@@ -61,5 +63,5 @@ def test_stale_evidence_does_not_establish_current_availability():
     result = evaluate_case(case)
     assert assessment.status is ClaimStatus.STALE_ONLY
     assert not result.has(FindingCategory.CONFIRMED_FALSE_CLAIM)
-    assert result.decision is Decision.ALLOW
+    assert result.decision is Decision.REVIEW and result.has(FindingCategory.EVIDENCE_REQUIREMENT_UNMET)  # held for fresh corroboration
     assert result.selection.better_offer_id is None  # A was not treated as usable

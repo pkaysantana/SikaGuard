@@ -1,0 +1,553 @@
+{
+ "F1a": {
+  "live": {
+   "B": {
+    "bases": [
+     "review_verified_contradiction"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:contradicted_by_terms"
+    ],
+    "deterministic": "ALLOW",
+    "final": "REVIEW",
+    "proven_false": [
+     "OFFER-A"
+    ],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   },
+   "B3": {
+    "bases": [
+     "review_verified_contradiction"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:contradicted_by_terms",
+     "no_additional_fees:contradicted_by_terms",
+     "no_additional_fees:contradicted_by_terms"
+    ],
+    "deterministic": "ALLOW",
+    "final": "REVIEW",
+    "proven_false": [
+     "OFFER-A"
+    ],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   "Bc": {
+    "bases": [
+     "review_verified_contradiction"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:contradicted_by_terms"
+    ],
+    "deterministic": "ALLOW",
+    "final": "REVIEW",
+    "proven_false": [
+     "OFFER-A"
+    ],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   },
+   "C": {
+    "bases": [
+     "review_verified_contradiction"
+    ],
+    "coverage": "partial",
+    "crosschecks": [
+     "no_additional_fees:contradicted_by_terms",
+     "no_additional_fees:contradicted_by_terms"
+    ],
+    "deterministic": "ALLOW",
+    "final": "REVIEW",
+    "proven_false": [
+     "OFFER-A"
+    ],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok",
+     "ok",
+     "invalid_response"
+    ]
+   }
+  },
+  "scripted": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "no_additional_fees:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F1b": {
+  "scripted": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F2a": {
+  "scripted": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-X"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F2b": {
+  "control_generalist_sees_the_description": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "control_merchant_claim_specialist_sees_it": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ]
+  },
+  "credit_terms_specialist_quotes_the_description": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ]
+  }
+ },
+ "F3": {
+  "contradicts_the_merchants_own_claim": {
+   "bases": [
+    "review_verified_contradiction",
+    "review_inferior_selection"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "REVIEW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": []
+  },
+  "control_honest_merchant_channel_flag": {
+   "bases": [
+    "review_evidence_requirement_unmet"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "REVIEW",
+   "final": "REVIEW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  },
+  "control_no_evidence_at_all": {
+   "bases": [
+    "review_evidence_requirement_unmet"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "REVIEW",
+   "final": "REVIEW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  },
+  "corroborates_the_merchants_own_claim": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  }
+ },
+ "F4a": {
+  "scripted": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:not_comparable"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F4b": {
+  "scripted": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:not_comparable"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F5a": {
+  "scripted": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F5b": {
+  "decimal_comma": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:consistent"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "grouping_slip": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "scaled_k": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:consistent"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "scaled_m": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "ALLOW",
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "three_decimals": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:consistent"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F6a": {
+  "rule_engine_only": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  }
+ },
+ "F6b": {
+  "scripted": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:extraction_disagrees_with_source"
+   ],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "F7": {
+  "rule_engine_only": {
+   "bases": [
+    "allow"
+   ],
+   "coverage": "not_applicable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "final": "ALLOW",
+   "proven_false": [],
+   "uncertainty": [],
+   "verdict_statuses": []
+  }
+ },
+ "F8": {
+  "fail_closed": {
+   "B": {
+    "bases": [
+     "allow"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   },
+   "Bc": {
+    "bases": [
+     "allow"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   }
+  },
+  "open": {
+   "B": {
+    "bases": [
+     "allow"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   },
+   "B3": {
+    "bases": [
+     "allow"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:ungrounded",
+     "no_additional_fees:ungrounded",
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   "Bc": {
+    "bases": [
+     "allow"
+    ],
+    "coverage": "complete",
+    "crosschecks": [
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok"
+    ]
+   },
+   "C": {
+    "bases": [
+     "allow_with_recorded_uncertainty"
+    ],
+    "coverage": "partial",
+    "crosschecks": [
+     "no_additional_fees:ungrounded",
+     "no_additional_fees:ungrounded"
+    ],
+    "deterministic": "ALLOW",
+    "final": "ALLOW",
+    "proven_false": [],
+    "uncertainty": [],
+    "verdict_statuses": [
+     "ok",
+     "ok",
+     "invalid_response"
+    ]
+   }
+  }
+ }
+}

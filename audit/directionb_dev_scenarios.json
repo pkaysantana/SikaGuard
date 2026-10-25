@@ -1,0 +1,564 @@
+{
+ "1_structured_mandate_violation": {
+  "authorised": false,
+  "decision": "BLOCK",
+  "findings": [
+   "committed_payment_exceeds_mandate"
+  ]
+ },
+ "2_structured_financial_contradiction": {
+  "decision": "REVIEW",
+  "findings": [
+   "advertised_total_mismatch"
+  ]
+ },
+ "3_legitimate_purchase": {
+  "consistent_lender_document_alone": "ALLOW",
+  "consistent_lender_document_extracted": {
+   "bases": [
+    "allow"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "consistent",
+     "equal",
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:consistent"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "plain": "ALLOW"
+ },
+ "4_A_allows_the_hidden_obligation": {
+  "decision": "ALLOW",
+  "findings": []
+ },
+ "5_verified_extraction": {
+  "bases": [
+   "review_unresolved_evidence_conflict"
+  ],
+  "checks": [
+   [
+    "lender_document",
+    "source_conflict",
+    "overstates_cost",
+    true
+   ]
+  ],
+  "coverage": "complete",
+  "crosschecks": [
+   "fee_amount:source_conflict"
+  ],
+  "deterministic": "ALLOW",
+  "escalated_by_ai": true,
+  "final": "REVIEW",
+  "proven_false": [],
+  "rejected": 0,
+  "routes": [
+   "verified_extraction:lender_document:source_conflict"
+  ],
+  "uncertainty": [],
+  "verdict_statuses": [
+   "ok"
+  ]
+ },
+ "5b_every_condition": {
+  "A+": {
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:source_conflict"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": true,
+   "final": "REVIEW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "B": {
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:source_conflict"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": true,
+   "final": "REVIEW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "B3": {
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ],
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ],
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:source_conflict",
+    "fee_amount:source_conflict",
+    "fee_amount:source_conflict"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": true,
+   "final": "REVIEW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ]
+  },
+  "Bc": {
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:source_conflict"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": true,
+   "final": "REVIEW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "C": {
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "source_conflict",
+     "overstates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:source_conflict"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": true,
+   "final": "REVIEW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ]
+  }
+ },
+ "6_unsupported_allegation": {
+  "allegations_only_with_a_REVIEW_verdict": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [],
+   "coverage": "complete",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "unverified_finding:mock-scripted:hidden_obligation",
+    "unverified_finding:mock-scripted:terms_inconsistent_with_representation"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "no_claim_extracted_at_all": {
+   "bases": [
+    "allow"
+   ],
+   "checks": [],
+   "coverage": "complete",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "7_incorrect_extractions": {
+  "a_conditional_fee_is_not_mandatory": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "not_comparable",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:not_comparable"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:not_comparable:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "a_document_bound_to_a_different_offer": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [],
+   "coverage": "unavailable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 1,
+   "routes": [],
+   "uncertainty": [
+    "evaluator_failure:mock-scripted:invalid_response"
+   ],
+   "verdict_statuses": [
+    "invalid_response"
+   ]
+  },
+  "a_document_of_another_lenders_is_not_this_lenders": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "independent_document",
+     "not_comparable",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:not_comparable"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:not_comparable:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "a_mislabelled_kind_total_for_a_fee": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "extraction_disagrees_with_source",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:extraction_disagrees_with_source"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:extraction_disagrees_with_source:mock-scripted:OFFER-A:total_repayable"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "amount_in_a_script_the_reader_will_not_trust": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "not_comparable",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:not_comparable"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:not_comparable:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "invented_quote": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [],
+   "coverage": "unavailable",
+   "crosschecks": [],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 1,
+   "routes": [],
+   "uncertainty": [
+    "evaluator_failure:mock-scripted:invalid_response"
+   ],
+   "verdict_statuses": [
+    "invalid_response"
+   ]
+  },
+  "the_merchant_states_the_same_fee_in_its_own_document": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "merchant_representation",
+     "discrepant_not_adverse",
+     "overstates_cost",
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:discrepant_not_adverse"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:discrepant_not_adverse:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "transposed_amount": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "extraction_disagrees_with_source",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:extraction_disagrees_with_source"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:extraction_disagrees_with_source:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  },
+  "wrong_quantity_stated_as_an_instalment": {
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "checks": [
+    [
+     "lender_document",
+     "extraction_disagrees_with_source",
+     null,
+     false
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "fee_amount:extraction_disagrees_with_source"
+   ],
+   "deterministic": "ALLOW",
+   "escalated_by_ai": false,
+   "final": "ALLOW",
+   "proven_false": [],
+   "rejected": 0,
+   "routes": [],
+   "uncertainty": [
+    "crosscheck:extraction_disagrees_with_source:mock-scripted:OFFER-A:fee_amount"
+   ],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ },
+ "8_no_double_credit": {
+  "rule_engine": "REVIEW",
+  "with_the_same_fact_extracted": {
+   "bases": [
+    "review_verified_contradiction"
+   ],
+   "checks": [
+    [
+     "merchant_representation",
+     "contradicted_by_terms",
+     "understates_cost",
+     true
+    ]
+   ],
+   "coverage": "complete",
+   "crosschecks": [
+    "total_repayable:contradicted_by_terms"
+   ],
+   "deterministic": "REVIEW",
+   "escalated_by_ai": false,
+   "final": "REVIEW",
+   "proven_false": [
+    "OFFER-A"
+   ],
+   "rejected": 0,
+   "routes": [
+    "verified_extraction:merchant_representation:contradicted_by_terms"
+   ],
+   "uncertainty": [],
+   "verdict_statuses": [
+    "ok"
+   ]
+  }
+ }
+}

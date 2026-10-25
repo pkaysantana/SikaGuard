@@ -7,10 +7,12 @@ Secrets are never printed or included in error text.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any, Self
 from urllib.parse import urlsplit
@@ -26,11 +28,11 @@ from sika_guard.evaluators.contract import (
     EvaluatorView,
     InvalidResponse,
     failure_verdict,
-    parse_analysis,
+    parse_analysis_normalised,
     verdict_from_analysis,
 )
 from sika_guard.evaluators.payloads import collect_refs
-from sika_guard.evaluators.prompts import GENERALIST, SPECIALISTS, RoleSpec
+from sika_guard.evaluators.prompts import GENERALIST, RUBRIC_GENERALIST, SPECIALISTS, RoleSpec, specs_for
 
 ENV_BASE_URL = "SIKA_GUARD_LLM_BASE_URL"
 ENV_API_KEY = "SIKA_GUARD_LLM_API_KEY"
@@ -43,6 +45,7 @@ ENV_PRICE_OUT = "SIKA_GUARD_LLM_PRICE_OUTPUT_PER_MTOK"
 REQUIRED_ENV = (ENV_BASE_URL, ENV_API_KEY, ENV_MODEL)
 
 DEFAULT_TIMEOUT_SECONDS = 60.0
+RAW_USAGE_CAP = 4000  # characters of JSON
 
 
 class ConfigError(Exception):
@@ -136,11 +139,19 @@ class LLMClient:
         if cfg.json_mode:
             body["response_format"] = {"type": "json_object"}
 
-        started = time.perf_counter()
+        started_at = datetime.now(timezone.utc)  # wall clock, for ordering only
+        started = time.perf_counter()  # monotonic, for latency
 
-        def record(status: CallStatus, http_status: int | None = None, usage: Mapping[str, Any] | None = None) -> CallRecord:
+        def record(
+            status: CallStatus,
+            http_status: int | None = None,
+            usage: Mapping[str, Any] | None = None,
+            provider: object = None,
+            returned_model: object = None,
+        ) -> CallRecord:
             usage = usage or {}
             prompt, completion = _count(usage.get("prompt_tokens")), _count(usage.get("completion_tokens"))
+            provider_cost = _raw_cost(usage.get("cost"))
             return CallRecord(
                 evaluator_id=evaluator_id,
                 model=cfg.model,
@@ -150,6 +161,14 @@ class LLMClient:
                 prompt_tokens=prompt,
                 completion_tokens=completion,
                 cost=cfg.cost(prompt, completion),
+                started_at=started_at,
+                finished_at=datetime.now(timezone.utc),
+                provider=_short(provider),
+                endpoint_host=urlsplit(cfg.base_url).hostname,
+                provider_cost=provider_cost,
+                provider_cost_unit="UNKNOWN" if provider_cost is not None else None,
+                returned_model=_short(returned_model),
+                raw_usage=_raw_usage(usage),
             )
 
         try:
@@ -172,15 +191,41 @@ class LLMClient:
             return LLMResponse(record(CallStatus.PROVIDER_ERROR, response.status_code), error="unexpected response envelope")
 
         usage = data.get("usage") if isinstance(data, dict) else None
+        usage = usage if isinstance(usage, dict) else None
+        provider = data.get("provider") if isinstance(data, dict) else None
+        returned_model = data.get("model") if isinstance(data, dict) else None
         refusal = message.get("refusal") if isinstance(message, dict) else None
         if refusal or choice.get("finish_reason") == "content_filter":
-            return LLMResponse(record(CallStatus.REFUSAL, response.status_code, usage), refusal=str(refusal or "content filtered")[:200])
+            return LLMResponse(record(CallStatus.REFUSAL, response.status_code, usage, provider, returned_model), refusal=str(refusal or "content filtered")[:200])
         content = message.get("content") if isinstance(message, dict) else None
-        return LLMResponse(record(CallStatus.OK, response.status_code, usage), content=content if isinstance(content, str) else None)
+        return LLMResponse(record(CallStatus.OK, response.status_code, usage, provider, returned_model), content=content if isinstance(content, str) else None)
 
 
 def _count(value: object) -> int | None:
     return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
+def _short(value: object) -> str | None:
+    return value.strip()[:80] if isinstance(value, str) and value.strip() else None
+
+
+def _raw_usage(usage: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """The provider's usage object as returned, if it is plain JSON and small; otherwise None."""
+    if not usage:
+        return None
+    try:
+        text = json.dumps(usage, allow_nan=False)
+    except (TypeError, ValueError):
+        return None
+    return json.loads(text) if len(text) <= RAW_USAGE_CAP else None
+
+
+def _raw_cost(value: object) -> Decimal | None:
+    """The provider's `usage.cost` as a number, exactly as returned. Anything else is None."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    amount = Decimal(str(value))
+    return amount if amount.is_finite() and amount >= 0 else None
 
 
 def _error_summary(response: httpx.Response) -> str:
@@ -212,7 +257,10 @@ class LLMAnalyst:
             {"role": "user", "content": spec.user_message(payload)},
         ]
         response = await self.client.complete(messages, evaluator_id=self.evaluator_id)
-        common = dict(evaluator_id=self.evaluator_id, role=self.role, prompt_version=spec.prompt_version, model_id=model, calls=(response.call,))
+        common = dict(
+            evaluator_id=self.evaluator_id, role=self.role, prompt_version=spec.prompt_version, model_id=model,
+            calls=(response.call,), raw_response=response.content,
+        )
 
         def fail(status: EvaluatorStatus, reason: str) -> EvaluatorVerdict:
             return failure_verdict(view, status=status, reason=reason, **common)
@@ -225,10 +273,10 @@ class LLMAnalyst:
             case CallStatus.PROVIDER_ERROR:
                 return fail(EvaluatorStatus.PROVIDER_ERROR, response.error or "provider error")
         try:
-            analysis = parse_analysis(response.content)
+            analysis, normalisations = parse_analysis_normalised(response.content)
         except InvalidResponse as exc:
             return fail(EvaluatorStatus.INVALID_RESPONSE, str(exc))
-        return verdict_from_analysis(analysis, view, allowed_refs=collect_refs(payload), **common)
+        return verdict_from_analysis(analysis, view, allowed_refs=collect_refs(payload), normalisations=normalisations, payload=payload, **common)
 
 
 def generalist(client: LLMClient) -> list[LLMAnalyst]:
@@ -239,3 +287,19 @@ def generalist(client: LLMClient) -> list[LLMAnalyst]:
 def specialists(client: LLMClient) -> list[LLMAnalyst]:
     """Condition C."""
     return [LLMAnalyst(spec, client) for spec in SPECIALISTS]
+
+
+def rubric_generalist(client: LLMClient) -> list[LLMAnalyst]:
+    """Condition Bc: one call applying all three specialist rubrics."""
+    return [LLMAnalyst(RUBRIC_GENERALIST, client)]
+
+
+def evaluators_for(condition: str, client: LLMClient | None) -> list:
+    """The analysts for any AI condition: B, B3 (three generalist samples), Bc or C. Condition A+ is not an AI condition: its one
+    evaluator is the deterministic scanner, which makes no call and needs no client."""
+    if condition == "A+":
+        from sika_guard.evaluators.scanner import DeterministicScanner
+
+        return [DeterministicScanner()]
+    assert client is not None, "an AI condition needs a client"
+    return [LLMAnalyst(spec, client) for spec in specs_for(condition)]

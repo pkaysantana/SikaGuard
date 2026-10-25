@@ -1,0 +1,46 @@
+{
+ "F10": {
+  "alternative_above_cap_counted_as_better": false,
+  "avoidable_minor": 0,
+  "control_eligible_alternative": [
+   true,
+   25400
+  ]
+ },
+ "F11": {
+  "arbitrary_file_can_be_sealed": "refused (LabelsLockedError: junk.txt is not a valid run log (JSONDecodeError))",
+  "incomplete_log_can_be_sealed": "refused (LabelsLockedError: 3 expected (condition, repeat, case) record(s) are missing, e.g. [('A')",
+  "incomplete_log_format": "v2 run with three records removed",
+  "scorer_can_open_labels_with_no_persisted_inference_seal": "refused (PermissionError: labels stayed closed (exit 3))"
+ },
+ "F12": {
+  "files_claiming_matched_compute": {}
+ },
+ "F13": {
+  "condition_B_final": "REVIEW",
+  "evaluator_status": "timeout",
+  "new_metric_ai_contributed_verified": 0,
+  "new_metric_deterministic_policy_catches": "1/1",
+  "old_metric_verified_contradiction_recall": null
+ },
+ "F9": {
+  "cases_with_a_non_neutral_nested_id": 0,
+  "transaction_ids": [
+   "id-0ecc4624",
+   "id-1a378caa",
+   "id-2cc46863",
+   "id-30cddb84",
+   "id-32cc6317",
+   "id-43fa0787",
+   "id-9c7283fa",
+   "id-a4622a3b",
+   "id-adf9d54d",
+   "id-cf464163",
+   "id-f78297e9",
+   "id-fe42e6d6"
+  ],
+  "transaction_ids_naming_a_scenario": 0,
+  "validator_errors_about_ids": [],
+  "validator_ok": true
+ }
+}

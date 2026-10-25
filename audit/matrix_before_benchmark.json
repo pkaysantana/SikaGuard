@@ -1,0 +1,50 @@
+{
+ "F10": {
+  "alternative_above_cap_counted_as_better": true,
+  "avoidable_minor": 6400,
+  "control_eligible_alternative": [
+   true,
+   25400
+  ]
+ },
+ "F11": {
+  "arbitrary_file_can_be_sealed": "ALLOWED",
+  "incomplete_log_can_be_sealed": "ALLOWED",
+  "scorer_can_open_labels_with_no_persisted_inference_seal": "ALLOWED"
+ },
+ "F12": {
+  "files_claiming_matched_compute": {
+   "BENCHMARK_SPEC.md": 1,
+   "README.md": 1,
+   "src/sika_guard/benchmark/manifest.py": 1,
+   "src/sika_guard/evaluate.py": 1
+  }
+ },
+ "F13": {
+  "condition_B_final": "REVIEW",
+  "evaluator_status": "timeout",
+  "new_metric_ai_contributed_verified": null,
+  "new_metric_deterministic_policy_catches": null,
+  "old_metric_verified_contradiction_recall": "1/1"
+ },
+ "F9": {
+  "cases_with_a_non_neutral_nested_id": 12,
+  "transaction_ids": [
+   "TX-ARC_FALSE",
+   "TX-ARC_TWIN",
+   "TX-BIRCH",
+   "TX-CONFLICT",
+   "TX-DIVERTED",
+   "TX-INKED",
+   "TX-IRRELEVANT",
+   "TX-NAMED",
+   "TX-NOVA",
+   "TX-ORBIT",
+   "TX-SLIVER",
+   "TX-STARVED"
+  ],
+  "transaction_ids_naming_a_scenario": 12,
+  "validator_errors_about_ids": [],
+  "validator_ok": true
+ }
+}

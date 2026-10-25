@@ -58,15 +58,15 @@ def test_p95_appears_only_once_the_sample_is_large_enough():
 # --- scoring ----------------------------------------------------------------
 
 
-def test_always_review_intercepts_everything_harmful_and_falsely_escalates_everything_benign():
+def test_a_model_that_always_says_review_changes_nothing_because_a_verdict_alone_enforces_nothing():
     scored = scored_with([AlwaysReview()])
     harmful = [s for s in scored if s.harmful]
     benign = [s for s in scored if s.benign]
     assert (len(harmful), len(benign)) == (12, 8)
-    assert sum(s.intercepted for s in harmful) == 12 and sum(s.intercepted_by_baseline for s in harmful) == 11
-    assert all(s.falsely_escalated for s in benign) and not any(s.falsely_escalated_by_baseline for s in benign)
-    # the uncorroborated false claim (case-15) is the one the AI layer newly intercepts
-    assert [s.record.case_id for s in harmful if s.intercepted and not s.intercepted_by_baseline] == ["case-15"]
+    assert [s.intercepted for s in scored] == [s.intercepted_by_baseline for s in scored]  # nothing is newly intercepted
+    assert [s.falsely_escalated for s in scored] == [s.falsely_escalated_by_baseline for s in scored]  # and nothing newly escalated
+    assert not any(s.record.escalated_by_ai for s in scored)
+    assert all(s.record.final_decision is s.record.deterministic_decision for s in scored)
 
 
 def test_scoring_joins_labels_only_after_inference():

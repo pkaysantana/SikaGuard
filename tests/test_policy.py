@@ -187,7 +187,9 @@ def test_agreeing_fresh_evidence_confirms_a_truthful_claim():
 
 
 def test_disagreeing_fresh_sources_are_a_conflict_not_a_verdict():
-    evidence = [make_evidence("OFFER-A", True), make_evidence("OFFER-A", False, source=AGGREGATOR_SOURCE, evidence_id="EV-2")]
+    # The aggregator is NEWER than the lender: the state may have changed since the lender spoke, so authority cannot settle it.
+    newer = NOW - timedelta(minutes=1)
+    evidence = [make_evidence("OFFER-A", True), make_evidence("OFFER-A", False, source=AGGREGATOR_SOURCE, evidence_id="EV-2", at=newer)]
     assert _status(evidence) is ClaimStatus.CONFLICTED
     result = evaluate_case(get_case("case-17"))
     assert result.decision is Decision.REVIEW

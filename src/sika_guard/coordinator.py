@@ -1,8 +1,18 @@
 """Deterministic coordination of the rule engine and the AI analysts.
 
 Order of play: the rule engine runs first; the selected AI condition runs next; trusted code
-validates and cross-checks what came back; then `resolve_final_decision` merges. An AI verdict can
-raise ALLOW to REVIEW and can do nothing else. Only the rule engine can produce BLOCK.
+validates, cross-checks and adjudicates what came back; then `resolve_final_decision` merges.
+
+The AI layer can raise ALLOW to REVIEW and can do nothing else, and only by one of three trusted routes:
+a finding that trusted code verified and found material, a claim extracted by a model that trusted code
+proves contradicts the lender's terms for the selected offer, or (only if configured) the fail-closed
+failure policy. A model's own verdict, suspicion or confidence enforces nothing. Only the rule engine can
+produce BLOCK, and nothing can lower one.
+
+Failure policy: a timeout, refusal, schema error or abstention is an evaluator failure, never an attack
+finding and never evidence about the merchant. By default the case proceeds on the rule engine's decision
+with coverage marked partial or unavailable and the failure listed (ALLOW with recorded uncertainty). With
+`fail_closed=True` an evaluator failure raises ALLOW to REVIEW, labelled `review_evaluator_failure`.
 
 Nothing here counts votes, uses a model's risk score, or treats a missing response as evidence
 about the merchant.
@@ -18,6 +28,13 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
+from sika_guard.evaluators.adjudicate import (
+    FindingAdjudication,
+    FindingEffect,
+    VerdictTreatment,
+    adjudicate,
+    unsupported_limit_allegations,
+)
 from sika_guard.evaluators.contract import (
     ConcernCode,
     Evaluator,
@@ -26,15 +43,30 @@ from sika_guard.evaluators.contract import (
     EvaluatorView,
     failure_verdict,
 )
-from sika_guard.evaluators.crosscheck import CrossCheck, crosscheck_claims
-from sika_guard.models import Case, Decision, FindingCategory
-from sika_guard.policy import DEFAULT_CONFIG, PolicyConfig, evaluate_case, resolve_final_decision
+from sika_guard.evaluators.crosscheck import (
+    ClaimProvenance,
+    CrossCheck,
+    CrossCheckOutcome,
+    claim_provenance,
+    crosscheck_claims,
+)
+from sika_guard.models import Case, Decision, DecisionBasis, FindingCategory
+from sika_guard.policy import DEFAULT_CONFIG, PolicyConfig, decision_bases, evaluate_case, resolve_final_decision
 
 
 class Condition(StrEnum):
     A = "A"  # deterministic baseline
+    A_PLUS = "A+"  # baseline plus the deterministic scanner: a non-LLM reference for what plain parsing of the same text can find
     B = "B"  # baseline plus one general-purpose analyst
+    B3 = "B3"  # baseline plus three independent calls of the same general-purpose analyst (call-count matched to C; compute is not claimed to match)
+    BC = "Bc"  # baseline plus one general-purpose analyst applying all three specialist rubrics (sees everything C sees, in one call)
     C = "C"  # baseline plus three concurrent specialists
+
+
+# Declared before any benchmark run and shared by every AI condition, so conditions differ only in what
+# they ask the model and how often. There is no vote and no use of risk scores: the most severe
+# adjudicated verdict counts, as one cautious analyst's concern is enough to ask a human to look.
+AGGREGATION_POLICY = "max_severity_of_adjudicated_verdicts"
 
 
 class Coverage(StrEnum):
@@ -77,6 +109,13 @@ class CaseRecord(BaseModel):
     proven_false_offer_ids: tuple[str, ...]  # confirmed by deterministic code, never by a model alone
     uncorroborated_contradictions: tuple[str, ...]  # "evaluator:offer" where a model alleged a contradiction code did not confirm
     latency: Latency
+    claim_provenance: tuple[ClaimProvenance, ...] = ()  # source and corroboration state of each model "unverified" finding
+    adjudications: tuple[FindingAdjudication, ...] = ()  # every model finding, with what trusted code could establish and why
+    verdict_treatments: tuple[VerdictTreatment, ...] = ()  # how each usable verdict counted towards the decision, and why
+    unsupported_limit_allegations: tuple[str, ...] = ()  # "evaluator:limit_exceeded" contradicted by the deterministic limit checks
+    decision_bases: tuple[DecisionBasis, ...] = ()  # why the final decision is what it is; never conflates the kinds of REVIEW
+    uncertainty_reasons: tuple[str, ...] = ()  # everything left unresolved, with its reason; empty only for a genuinely clean case
+    ai_review_routes: tuple[str, ...] = ()  # each route by which the AI layer was ABLE to ask for a REVIEW here, whether or not the rule engine had already
 
 
 async def _run_one(evaluator: Evaluator, view: EvaluatorView) -> EvaluatorVerdict:
@@ -126,13 +165,46 @@ async def coordinate(
     checks = crosscheck_claims(view, verdicts, config.policy)
     usable = [v for v in verdicts if v.usable]
 
-    advisory = Decision.ALLOW
-    for v in usable:
-        if v.verdict.severity > advisory.severity:
-            advisory = v.verdict
-    if any(c.contradicted for c in checks) or (config.fail_closed and len(usable) < len(verdicts)):
-        advisory = max(advisory, Decision.REVIEW, key=lambda d: d.severity)
+    adjudications, treatments = adjudicate(view, det, verdicts, config.policy)
+    enforced = any(t.counted_as is Decision.REVIEW for t in treatments)  # a verified, material finding
+    # The lender's terms are authoritative; a model-extracted claim that contradicts them matters if it concerns
+    # the offer being bought. (Availability contradictions are the rule engine's own, with its own materiality.)
+    # The one route by which an extraction reaches REVIEW (`CrossCheck.enforces`): verified, adverse to the customer, material under the
+    # predeclared standard, and about the offer being bought. It is the same test for B, B3, Bc, C and the deterministic scanner.
+    contradicted_terms = any(c.enforces and c.outcome is CrossCheckOutcome.CONTRADICTED_BY_TERMS for c in checks)
+    source_conflict = any(c.enforces and c.outcome is CrossCheckOutcome.SOURCE_CONFLICT for c in checks)
+    failed = config.fail_closed and len(usable) < len(verdicts)
+    advisory = Decision.REVIEW if (enforced or contradicted_terms or source_conflict or failed) else Decision.ALLOW
     final = resolve_final_decision(det.decision, advisory)
+
+    # Everything unresolved is listed with its reason, so no ALLOW is silently clean: a rule-engine uncertainty, a trusted
+    # cross-check that could not conclude, an evaluator failure, or an unverifiable model finding. None of these accuses anyone.
+    uncertainty = tuple(
+        [f"rule_engine:{f.code.value}:{f.subject_id}" for f in det.findings if f.category in (FindingCategory.UNVERIFIED_CLAIM, FindingCategory.SUSPICIOUS_BEHAVIOUR)
+         or (f.category in (FindingCategory.CONFIRMED_FALSE_CLAIM, FindingCategory.UNRESOLVED_CONTRADICTION, FindingCategory.INFERIOR_SELECTION) and not f.material)]
+        + [f"crosscheck:{c.outcome.value}:{c.evaluator_id}:{c.offer_id}:{c.kind.value}" for c in checks
+           if c.outcome in (CrossCheckOutcome.NOT_COMPARABLE, CrossCheckOutcome.EXTRACTION_DISAGREES, CrossCheckOutcome.UNGROUNDED, CrossCheckOutcome.DISCREPANT_NOT_ADVERSE)
+           or (c.outcome in (CrossCheckOutcome.CONTRADICTED_BY_TERMS, CrossCheckOutcome.SOURCE_CONFLICT) and not c.enforces)]
+        + [f"evaluator_failure:{v.evaluator_id}:{v.status.value}" for v in verdicts if not v.usable]
+        + [f"unverified_finding:{a.evaluator_id}:{a.code.value}" for a in adjudications if a.effect is FindingEffect.UNVERIFIED_RECORDED]
+    )
+    ai_bases = (
+        [DecisionBasis.REVIEW_VERIFIED_CONTRADICTION] * (enforced or contradicted_terms)
+        + [DecisionBasis.REVIEW_UNRESOLVED_CONFLICT] * source_conflict
+        + [DecisionBasis.REVIEW_EVALUATOR_FAILURE] * failed
+    )
+    routes = tuple(dict.fromkeys(
+        (["adjudicated_finding"] if enforced else [])
+        + [f"verified_extraction:{c.source_class.value}:{c.outcome.value}" for c in checks if c.enforces and c.source_class is not None]
+        + (["fail_closed_evaluator_failure"] if failed else [])
+    ))
+    det_bases = decision_bases(det)
+    if final is Decision.BLOCK:
+        bases = det_bases
+    elif final is Decision.REVIEW:
+        bases = tuple(dict.fromkeys([b for b in det_bases if b.value.startswith("review")] + ai_bases))
+    else:
+        bases = (DecisionBasis.ALLOW_WITH_UNCERTAINTY if uncertainty else DecisionBasis.ALLOW,)
 
     proven = {f.subject_id for f in det.findings if f.category is FindingCategory.CONFIRMED_FALSE_CLAIM and f.subject_id}
     proven |= {c.offer_id for c in checks if c.contradicted}
@@ -174,4 +246,11 @@ async def coordinate(
             ai_ms=(after_ai - after_det) * 1000,
             total_ms=(finished - started) * 1000,
         ),
+        claim_provenance=claim_provenance(view, verdicts, config.policy),
+        adjudications=adjudications,
+        verdict_treatments=treatments,
+        unsupported_limit_allegations=unsupported_limit_allegations(adjudications),
+        decision_bases=bases,
+        uncertainty_reasons=uncertainty,
+        ai_review_routes=routes,
     )
