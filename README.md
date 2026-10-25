@@ -148,6 +148,10 @@ The 20 fixtures, the live smoke-test cases (case-01, 04, 05, 10), the prompts (v
 
 An independent audit of the implementation reported 13 findings (F1-F13). They were reproduced offline, repaired where the contract was clear, and triaged in [AUDIT_TRIAGE.md](AUDIT_TRIAGE.md), with a before/after counterexample matrix in `audit/`. One (what `Mandate.max_amount` covers) needs a product decision and is left as a pending specification test. The code is a **development baseline, not frozen**. The sandbox still **assumes** its lender, customer and evidence inputs are honest: there is no real lender, customer or source authentication.
 
+## Hackathon demonstration
+
+[DEMO.md](DEMO.md) has the exact commands, the three demonstration cases, the measured comparison of A, A+, B, B3, Bc and C (one small live check with `openai/gpt-4o-mini`, 16 calls), an explanation of specialist concurrency with the measured timings, and the limitations. The headline is a negative result: no AI condition produced a verified interception beyond A or the plain text scanner A+. Saved runs are in `results/`.
+
 ## Direction B: evidence-grounded parallel-AI research
 
 The research question is whether specialised AI analysis can find materially relevant information in unstructured financial evidence that trusted code can verify and use to prevent a harmful decision Condition A would otherwise miss. See [DIRECTION_B_TRIAGE.md](DIRECTION_B_TRIAGE.md). In short: the rule engine runs on trusted inputs (decision clock, acting agent, offer-derived scope) and is never weakened; models may extract facts from merchant text and from lender documents; trusted code grounds each fact in what that evaluator was shown, compares it with the lender's structured terms in a direction under a predeclared materiality standard, and only an adverse, material discrepancy about the offer being bought can raise ALLOW to REVIEW, by one route that is identical for B, B3, Bc, C and the deterministic scanner **A+**. Nothing creates a BLOCK. The development scenarios show the pathway works; they do **not** show that AI beats A+ (A+ finds the same fact), and they are not evidence about any model.

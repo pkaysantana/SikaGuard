@@ -1,0 +1,24 @@
+Sika Guard development run: DETERMINISTIC conditions only (A and A+): no model involved; real results of the rule engine and the scanner
+  conditions A, A+; 3 case(s) x 1 repeat(s); planned calls 0, recorded 0; model fake-quiet; manifest 012aa7527f3e27b4 (development_baseline)
+
+By condition (all figures are counts over the cases above; descriptive only)
+  cond  ALLOW REVIEW BLOCK  verified>A also >A+ candidates false alleg. schema fail prov fail calls med call ms cand@hold cand@ok ign.alarm  match false+ missed
+  A         2      0     1           0        0          0            0           0         0     0           -         0       0         0      2      0      1
+  A+        1      1     1           1        0          0            0           0         0     0           -         0       0         0      3      0      0
+  'verified>A' counts cases raised above Condition A by a VERIFIED extraction (for A+ the extractor is the deterministic scanner, not a model); 'also >A+' requires that A+ had not already held them.
+  'candidates' are claims or concerns trusted code could not establish: reported, never counted as an interception.
+  'cand@hold' = candidates on cases a person would want held (possible discoveries); 'cand@ok' = candidates on cases that should be allowed (false alarms, recorded and not enforced).
+  'ign.alarm' = model REVIEW/BLOCK verdicts on cases that should be allowed that the policy did NOT enforce: false positives this design prevented (a condition that obeyed its model would have made them).
+
+Per case: final decision by condition (expected = what the policy should decide; ideal = what a person would want)
+  case                                               expect  ideal       A      A+
+  hard_violation_later_instalment_above_cap           BLOCK  BLOCK   BLOCK   BLOCK
+  legit_consistent_lender_document                    ALLOW  ALLOW   ALLOW   ALLOW
+  unstructured_unconditional_fee                     REVIEW REVIEW   ALLOW  REVIEW
+
+Details (verified extractions, candidate discoveries, failures and false allegations)
+  unstructured_unconditional_fee [A+] final REVIEW (A ALLOW, A+ REVIEW)
+      VERIFIED  deterministic-scanner: fee_amount source_conflict lender_document material=True
+
+What this does not show: nothing here is a result about model quality beyond these cases; the cases are development data written alongside the rules,
+and a fake or mock run says nothing about any model.

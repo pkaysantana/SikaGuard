@@ -141,7 +141,7 @@ def test_r10_a_live_declaration_bound_to_a_development_baseline_cannot_be_sealed
 
 def test_r10_source_edited_while_the_run_was_in_progress_cannot_be_sealed(tmp_path, monkeypatch):
     cases, labels, log, directory = written(tmp_path, seal=False)
-    monkeypatch.setattr(binding, "current_frozen_core_digest", lambda root=None: "2" * 64)  # a frozen-core file changed after the run began
+    monkeypatch.setattr(binding, "current_frozen_core_digest", lambda root=None, manifest=None: "2" * 64)  # a frozen-core file changed after the run began
     with pytest.raises(LabelsLockedError, match="changed while the run was in progress"):
         write_seal_file(log, cases, manifests_dir=directory)
     assert not seal_path_for(log).exists()
@@ -171,7 +171,7 @@ def test_r10_a_deleted_manifest_keeps_the_labels_closed_at_scoring_time(tmp_path
 
 def test_r10_scoring_after_the_tree_has_legitimately_moved_on_still_works_because_the_seal_recorded_the_run_time_binding(tmp_path, monkeypatch):
     cases, labels, log, directory = written(tmp_path)
-    monkeypatch.setattr(binding, "current_frozen_core_digest", lambda root=None: "5" * 64)  # the code was edited after the run
+    monkeypatch.setattr(binding, "current_frozen_core_digest", lambda root=None, manifest=None: "5" * 64)  # the code was edited after the run
     assert len(load_labels(labels, log, cases, manifests_dir=directory)) == 12
 
 
@@ -215,3 +215,31 @@ def test_r10_condition_a_plus_is_defined_in_the_manifest_with_the_scanners_own_s
 def test_the_limit_is_stated():
     assert "malicious operator" in (binding.__doc__ or "") + (__import__("sika_guard.benchmark.seal", fromlist=["x"]).__doc__ or "")
     assert "not authentication" in (binding.__doc__ or "") + (__import__("sika_guard.benchmark.seal", fromlist=["x"]).__doc__ or "")
+
+
+# --- reproducibility across platforms: a line-ending-only difference is not a change ---------------------------------------------------------------
+
+
+def test_a_recorded_hash_recognises_the_same_text_under_either_line_ending_but_not_an_edit(tmp_path):
+    f = tmp_path / "money.py"
+    f.write_bytes(b"x = 1\ny = 2\n")
+    lf_hash = mf.sha256_bytes(b"x = 1\ny = 2\n")
+    assert mf.matches_recorded(f, lf_hash)
+    f.write_bytes(b"x = 1\r\ny = 2\r\n")  # the same text checked out with CRLF
+    assert mf.matches_recorded(f, lf_hash) and mf.matches_recorded(f, mf.sha256_bytes(b"x = 1\r\ny = 2\r\n"))
+    f.write_bytes(b"x = 1\r\ny = 3\r\n")  # a real edit
+    assert not mf.matches_recorded(f, lf_hash)
+
+
+def test_the_frozen_core_hash_a_run_is_sealed_against_survives_a_checkout_with_other_line_endings(tmp_path):
+    core = tmp_path / "src" / "sika_guard"
+    core.mkdir(parents=True)
+    path = core / "money.py"
+    path.write_bytes(b"a = 1\nb = 2\n")
+    manifest = {"files": {"src/sika_guard/money.py": {"sha256": mf.sha256_bytes(b"a = 1\nb = 2\n"), "group": "frozen_core"}}}
+    recorded = binding.frozen_core_digest(manifest)
+    path.write_bytes(b"a = 1\r\nb = 2\r\n")  # a clone on another platform
+    assert binding.current_frozen_core_digest(tmp_path, manifest) == recorded
+    assert binding.current_frozen_core_digest(tmp_path) != recorded  # without the manifest to compare against, raw bytes are all there is
+    path.write_bytes(b"a = 1\r\nb = 3\r\n")  # but an actual edit is still caught
+    assert binding.current_frozen_core_digest(tmp_path, manifest) != recorded

@@ -257,7 +257,7 @@ def credit_terms_payload(view: EvaluatorView) -> Payload:
             "lender_terms": [_terms(o) for o in view.offers],
         },
         "untrusted_merchant_content": {
-            "offer_listings": [_pick(_listing(o), "ref", "offer_id", "advertised_total_repayable") for o in view.offers],
+            "offer_listings": [_pick(_listing(o), "ref", "offer_id", "title", "advertised_total_repayable") for o in view.offers],
         },
     }, [], _documents(view, independent=True))
 

@@ -137,7 +137,8 @@ PRE_AUDIT = ROOT / "manifests" / "manifest-0002-pre-remediation.json"
 FIRST_POST_AUDIT = ROOT / "manifests" / "manifest-0003-post-remediation.json"  # superseded by 0004, kept as history
 POST_AUDIT = ROOT / "manifests" / "manifest-0004-post-remediation.json"
 PRE_DIRECTION_B = ROOT / "manifests" / "manifest-0005-pre-direction-b.json"
-CURRENT = ROOT / "manifests" / "manifest-0006-direction-b.json"
+DIRECTION_B_BASELINE = ROOT / "manifests" / "manifest-0006-direction-b.json"  # superseded by 0007, kept as history
+CURRENT = ROOT / "manifests" / "manifest-0007-hackathon-runner.json"
 
 # Every frozen-core file Direction B changed or added since manifest-0005, and nothing else. Each is explained in DIRECTION_B_TRIAGE.md.
 DIRECTION_B_AMENDED_FROZEN_FILES = {
@@ -166,11 +167,11 @@ def _touched(drift, group):
 
 
 def test_the_historical_manifests_are_intact_and_none_was_overwritten():
-    manifests = [mf.load_manifest(p) for p in (INITIAL, PRE_AUDIT, FIRST_POST_AUDIT, POST_AUDIT, PRE_DIRECTION_B, CURRENT)]  # load_manifest refuses an edited one
-    first, pre, post1, post, start, now = manifests
+    manifests = [mf.load_manifest(p) for p in (INITIAL, PRE_AUDIT, FIRST_POST_AUDIT, POST_AUDIT, PRE_DIRECTION_B, DIRECTION_B_BASELINE, CURRENT)]  # load_manifest refuses an edited one
+    first, pre, post1, post, start, _direction_b, now = manifests
     assert "INITIAL" in first["note"] and "AUDIT BASELINE" in pre["note"] and "not a freeze" in post1["note"] and "Supersedes manifest-0003" in post["note"]
     assert "STARTING STATE" in start["note"] and "not a freeze" in now["note"].lower()
-    assert len({m["digest"] for m in manifests}) == 6
+    assert len({m["digest"] for m in manifests}) == 7
     assert all(m["working_tree"]["head_matches_working_tree"] is False for m in manifests[1:])  # none of them is a committed tree
     assert all(m.get("status", "development_baseline") == "development_baseline" for m in manifests)  # none was ever approved as a freeze
 
@@ -209,3 +210,12 @@ def test_manifest_0005_is_the_state_the_audit_remediation_left_it_in():
     post = {p for p, e in mf.load_manifest(POST_AUDIT)["files"].items() if e["group"] == "frozen_core"}
     assert start == post and all(mf.load_manifest(PRE_DIRECTION_B)["files"][p]["sha256"] == mf.load_manifest(POST_AUDIT)["files"][p]["sha256"] for p in start)
     assert drift.frozen_core_drifted  # and the tree has since moved on, which is what the Direction B work is
+
+
+def test_the_hackathon_runner_work_changed_only_three_frozen_files_and_no_prompt():
+    """Since the Direction B baseline (0006): the amount reader (customer-dependent conditions), the credit-terms payload (plan titles) and the
+    scanner (attribution across plans). No prompt changed, and neither did the decision policy's rules."""
+    drift = mf.verify_manifest(mf.load_manifest(DIRECTION_B_BASELINE), ROOT)
+    assert _touched(drift, "frozen_core") == {"src/sika_guard/evaluators/amounts.py", "src/sika_guard/evaluators/payloads.py", "src/sika_guard/evaluators/scanner.py"}
+    assert drift.prompt_changes == [d for d in drift.prompt_changes if d.startswith("A+/")]  # only the scanner's own definition (its source hash) moved
+    assert _touched(drift, "development_data") == set()

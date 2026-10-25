@@ -74,6 +74,19 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
+def hash_variants(path: Path) -> set[str]:
+    """The hashes this file has under each line-ending convention. A manifest records the bytes that were on disk when it was recorded, and
+    the same source has different bytes on a machine that checks out CRLF than on one that checks out LF. Hashing the content under both
+    conventions lets a recorded manifest still recognise unchanged text without rewriting it. A real edit matches neither."""
+    raw = path.read_bytes()
+    lf = raw.replace(b"\r\n", b"\n")
+    return {sha256_bytes(raw), sha256_bytes(lf), sha256_bytes(lf.replace(b"\n", b"\r\n"))}
+
+
+def matches_recorded(path: Path, recorded_sha256: str) -> bool:
+    return recorded_sha256 in hash_variants(path)
+
+
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
@@ -307,8 +320,8 @@ def verify_manifest(manifest: dict[str, Any], root: Path | None = None) -> Drift
     for rel, entry in old_files.items():
         if rel not in new_files:
             drift.removed[rel] = entry["group"]
-        elif new_files[rel]["sha256"] != entry["sha256"]:
-            drift.changed[rel] = entry["group"]
+        elif new_files[rel]["sha256"] != entry["sha256"] and not matches_recorded(root / rel, entry["sha256"]):
+            drift.changed[rel] = entry["group"]  # a difference in line endings alone is not a change
     for rel, entry in new_files.items():
         if rel not in old_files:
             drift.added[rel] = entry["group"]

@@ -1,0 +1,11 @@
+# Pin line endings for SOURCE, so a clone on any platform has the same text. Manifest verification also tolerates a line-ending-only difference.
+* text=auto eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+# Anything whose digest is over raw bytes (run logs, seals, case files, manifests, recorded replies) must be stored and restored byte for byte.
+*.jsonl -text
+results/** -text
+audit/** -text
+manifests/** -text
+tests/data/** -text

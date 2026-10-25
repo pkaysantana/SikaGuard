@@ -79,8 +79,17 @@ def frozen_core_digest(manifest: dict[str, Any]) -> str:
     return _digest(sorted((rel, e["sha256"]) for rel, e in manifest["files"].items() if e["group"] == "frozen_core"))
 
 
-def current_frozen_core_digest(root: Path | None = None) -> str:
-    return frozen_core_digest({"files": mf.file_hashes(root or mf.repo_root())})
+def current_frozen_core_digest(root: Path | None = None, manifest: dict[str, Any] | None = None) -> str:
+    """The frozen-core hash of the tree as it is now. Given the manifest it is being compared with, a file whose text is unchanged under a
+    different line-ending convention counts as the recorded bytes (see `manifest.hash_variants`), so a clone on another platform still matches."""
+    base = root or mf.repo_root()
+    files = mf.file_hashes(base)
+    if manifest is not None:
+        for rel, entry in files.items():
+            recorded = manifest["files"].get(rel)
+            if recorded is not None and entry["sha256"] != recorded["sha256"] and mf.matches_recorded(base / rel, recorded["sha256"]):
+                entry["sha256"] = recorded["sha256"]
+    return frozen_core_digest({"files": files})
 
 
 def conditions_digest(manifest: dict[str, Any], conditions: Sequence[str]) -> str:
@@ -115,5 +124,5 @@ def check_recorded(*, manifest_digest: str, status: str, frozen_core_sha256: str
         raise ManifestBindingError("the declared frozen-core hash is not the manifest's")
     if conditions_digest(manifest, conditions) != conditions_sha256:
         raise ManifestBindingError("the declared condition definitions are not the manifest's")
-    if still_running and current_frozen_core_digest(root) != frozen_core_sha256:
+    if still_running and current_frozen_core_digest(root, manifest) != frozen_core_sha256:
         raise ManifestBindingError("the frozen core changed while the run was in progress")

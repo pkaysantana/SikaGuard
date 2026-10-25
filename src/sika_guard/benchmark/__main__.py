@@ -142,6 +142,73 @@ def cmd_pilot_run(a: argparse.Namespace) -> int:
     return _score_and_print(out / "cases.jsonl", log, out / "labels.jsonl", mock=True, manifests_dir=manifests)
 
 
+def cmd_challenge_write(a: argparse.Namespace) -> int:
+    """Write the development challenge cases (model-visible) and, SEPARATELY, their expectations. `--only` writes a subset for a smoke test."""
+    from sika_guard.benchmark import devchallenge
+    from sika_guard.benchmark.visible import dump_visible
+
+    out = Path(a.out_dir)
+    cases_path, exp_path = devchallenge.write(out)
+    if a.only:
+        wanted = {s.strip() for s in a.only.split(",") if s.strip()}
+        built = [(slug, case, exp) for slug, case, exp in devchallenge.build() if slug in wanted]
+        unknown = wanted - {slug for slug, _, _ in built}
+        if unknown:
+            print(f"unknown slug(s): {', '.join(sorted(unknown))}", file=sys.stderr)
+            return 2
+        cases_path = out / "smoke_cases.jsonl"
+        cases_path.write_text(dump_visible([c for _, c, _ in built]), encoding="utf-8")
+        import json as _json
+        from dataclasses import asdict
+
+        exp_path = out / "smoke_expectations.json"
+        exp_path.write_text(_json.dumps([asdict(e) for _, _, e in built], indent=1), encoding="utf-8")
+    print(f"wrote DEVELOPMENT-ONLY challenge cases to {cases_path} and, separately, their expectations to {exp_path}")
+    return 0
+
+
+def cmd_run(a: argparse.Namespace) -> int:
+    from sika_guard.benchmark import devrun
+
+    try:
+        conditions = devrun.parse_conditions(a.conditions)
+    except ValueError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
+    out = Path(a.out_dir)
+    result = devrun.run_dev(
+        Path(a.cases), out, conditions, repeats=a.repeats, mode=a.mode, fake_mode=a.fake_mode, max_calls=a.max_calls, confirm_spend=a.confirm_spend,
+        fail_closed=a.fail_closed,
+    )
+    o = result.outcome
+    print(f"\nrun {'COMPLETE and sealed' if o.complete else 'INCOMPLETE (not sealed; labels and expectations stay closed)'}: {o.recorded}/{o.expected} records, {o.failures} failure(s); "
+          f"{o.calls_made} request(s) sent (plan {o.plan.total_calls}); log {result.log_path}")
+    for note in o.notes:
+        print("  note:", note)
+    if not o.complete:
+        return 1
+    return _report(Path(a.cases), result.log_path, Path(a.expectations) if a.expectations else None, result.manifests_dir, out)
+
+
+def _report(cases_path: Path, log_path: Path, expectations: Path | None, manifests_dir: Path | None, out: Path) -> int:
+    from sika_guard.benchmark import devrun
+    from sika_guard.benchmark.seal import LabelsLockedError
+
+    try:
+        rep = devrun.report_from_files(cases_path, log_path, expectations, manifests_dir)
+    except LabelsLockedError as exc:
+        print(f"expectations stay closed: {exc}", file=sys.stderr)
+        return 3
+    json_path, text_path = devrun.write_outputs(rep, out)
+    print("\n" + devrun.format_report(rep) + f"\n\nsaved: {json_path} and {text_path}")
+    return 0
+
+
+def cmd_report(a: argparse.Namespace) -> int:
+    log = Path(a.decisions)
+    return _report(Path(a.cases), log, Path(a.expectations) if a.expectations else None, Path(a.manifests_dir) if a.manifests_dir else log.parent / "manifests", log.parent)
+
+
 def cmd_score(a: argparse.Namespace) -> int:
     return _score_and_print(Path(a.cases), Path(a.decisions), Path(a.labels), mock=False)
 
@@ -193,6 +260,28 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("pilot-run", help="run the scripted mock evaluators over the pilot and score them (no model is called)")
     s.add_argument("--out-dir", required=True)
     s.set_defaults(fn=cmd_pilot_run)
+    s = sub.add_parser("challenge-write", help="write the development-only challenge cases and, separately, their expectations")
+    s.add_argument("--out-dir", required=True)
+    s.add_argument("--only", default="", help="comma-separated slugs: write a subset as smoke_cases.jsonl for a small live check")
+    s.set_defaults(fn=cmd_challenge_write)
+    s = sub.add_parser("run", help="run development cases through chosen conditions; a fake provider by default, a live one only with explicit spend limits")
+    s.add_argument("--cases", required=True)
+    s.add_argument("--out-dir", required=True)
+    s.add_argument("--conditions", default="A,A+,B,B3,Bc,C")
+    s.add_argument("--repeats", type=int, default=1)
+    s.add_argument("--mode", choices=("deterministic", "fake", "dev-live"), default="fake")
+    s.add_argument("--fake-mode", choices=("quiet", "alarmist", "extractor", "flaky"), default="quiet")
+    s.add_argument("--max-calls", type=int, default=None, help="dev-live only: hard ceiling on requests, enforced where they leave the process")
+    s.add_argument("--confirm-spend", type=int, default=None, help="dev-live only: must equal the exact planned number of calls")
+    s.add_argument("--fail-closed", action="store_true")
+    s.add_argument("--expectations", default=None, help="a separate expectations file, read only after the run is sealed complete")
+    s.set_defaults(fn=cmd_run)
+    s = sub.add_parser("report", help="rebuild the report for a finished, sealed run")
+    s.add_argument("--cases", required=True)
+    s.add_argument("--decisions", required=True)
+    s.add_argument("--expectations", default=None)
+    s.add_argument("--manifests-dir", default=None)
+    s.set_defaults(fn=cmd_report)
     s = sub.add_parser("score", help="seal a decision log, open the labels through the seal, and score")
     s.add_argument("--cases", required=True)
     s.add_argument("--decisions", required=True)

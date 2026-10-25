@@ -77,7 +77,8 @@ _FEE_AFTER = re.compile(r"^\s?(?:fees?\b|charges?\b|admin(?:istration)? fee\b|ar
 
 # A fee that depends on something the customer does or chooses is not a mandatory obligation of the agreement.
 _CONDITIONAL = re.compile(
-    r"\b(?:optional|optionally|if|unless|should you|in the event|on request|only when|when you|whenever|late|early|missed|defaults?|arrears|may|might|can be|could)\b", re.I
+    r"\b(?:optional|optionally|if|unless|should you|in the event|on request|only when|when you|whenever|late|early|missed|defaults?|arrears|may|might|can be|could"
+    r"|(?:customers?|applicants?|borrowers?|people|those|anyone|anybody) (?:with|who|whose|under|over|aged|earning|living|without)|for (?:customers|applicants|borrowers)|depending on|subject to|where)\b", re.I
 )
 
 _NO_FEE = [

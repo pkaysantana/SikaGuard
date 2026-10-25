@@ -1,0 +1,542 @@
+{
+  "aggregation": {
+    "fail_closed_default": false,
+    "policy": "max_severity_of_adjudicated_verdicts",
+    "rule": "any single enforcing route counts: a verified and material finding, a verified extraction that trusted code finds adverse, material and about the selected offer (the same test for every condition), or (only if fail_closed) an evaluator failure. No vote, no risk score."
+  },
+  "conditions": {
+    "A": {
+      "description": "deterministic rule engine only; no model is called",
+      "evaluators": []
+    },
+    "A+": {
+      "description": "deterministic rule engine plus a non-LLM scanner of the same source passages the generalist sees; no model is called",
+      "evaluators": [
+        {
+          "evaluator_id": "deterministic-scanner",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "deterministic-scanner-v1",
+          "role": "deterministic",
+          "system_prompt_sha256": "a531afecec0aa1d5ea30e0c39d9e03c30874df4a1f057dda6202922ce43b60cd"
+        }
+      ]
+    },
+    "B": {
+      "description": "baseline plus one general-purpose analyst, one call per case",
+      "evaluators": [
+        {
+          "evaluator_id": "generalist",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v4",
+          "role": "generalist",
+          "system_prompt_sha256": "4289a1dd500e83897728f57ab2bce799415d34e110c7ff2c5fcaa9b5b1678818"
+        }
+      ]
+    },
+    "B3": {
+      "description": "baseline plus three independent calls of the same general-purpose analyst (the same number of calls as C; compute is not claimed to match)",
+      "evaluators": [
+        {
+          "evaluator_id": "generalist_1",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v4",
+          "role": "generalist",
+          "system_prompt_sha256": "4289a1dd500e83897728f57ab2bce799415d34e110c7ff2c5fcaa9b5b1678818"
+        },
+        {
+          "evaluator_id": "generalist_2",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v4",
+          "role": "generalist",
+          "system_prompt_sha256": "4289a1dd500e83897728f57ab2bce799415d34e110c7ff2c5fcaa9b5b1678818"
+        },
+        {
+          "evaluator_id": "generalist_3",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "generalist-v4",
+          "role": "generalist",
+          "system_prompt_sha256": "4289a1dd500e83897728f57ab2bce799415d34e110c7ff2c5fcaa9b5b1678818"
+        }
+      ]
+    },
+    "Bc": {
+      "description": "baseline plus one analyst applying all three specialist rubrics in one call (given the same information as C)",
+      "evaluators": [
+        {
+          "evaluator_id": "rubric_generalist",
+          "payload_builder": "generalist_payload",
+          "prompt_version": "rubric-generalist-v4",
+          "role": "rubric_generalist",
+          "system_prompt_sha256": "cb66b49e03a54fe9f5ba575d07eed86ac4b42fed2a1cd6635ef9579f417e4b86"
+        }
+      ]
+    },
+    "C": {
+      "description": "baseline plus three concurrent specialist analysts (merchant claims, credit terms, authority)",
+      "evaluators": [
+        {
+          "evaluator_id": "merchant_claim",
+          "payload_builder": "merchant_claim_payload",
+          "prompt_version": "merchant-claim-v4",
+          "role": "merchant_claim",
+          "system_prompt_sha256": "550908948f7e58ae17c09a21fded214259efc606d73a8eb6beade347c0df0ea0"
+        },
+        {
+          "evaluator_id": "credit_terms",
+          "payload_builder": "credit_terms_payload",
+          "prompt_version": "credit-terms-v4",
+          "role": "credit_terms",
+          "system_prompt_sha256": "e8e5354cd4088c8094f2e4171c0c70166ad3a38349418cd086fad749d434ef05"
+        },
+        {
+          "evaluator_id": "authority",
+          "payload_builder": "authority_payload",
+          "prompt_version": "authority-v4",
+          "role": "authority",
+          "system_prompt_sha256": "3b3f51a0a4255353c2659aeb82bcbbf7598afb271806eb15c5db092cd584844b"
+        }
+      ]
+    }
+  },
+  "created_utc": "2026-10-25T00:13:58.156589+00:00",
+  "decision_policy": {
+    "deterministic_materiality_assumptions": {
+      "status": "provisional policy assumptions; not tuned on any held-out data",
+      "units": {
+        "*_gap_minor": "minor currency units (pence, cents)",
+        "max_evidence_age": "seconds"
+      },
+      "values": {
+        "evidence_requirement_gap_minor": 500,
+        "hidden_obligation_material_minor": 500,
+        "material_gap_minor": 500,
+        "max_document_age": 31536000.0,
+        "max_evidence_age": 3600.0,
+        "require_corroboration": true,
+        "stale_evidence_counts_as_uncorroborated": true,
+        "understatement_material_minor": 1
+      }
+    },
+    "document": "DECISION_POLICY.md",
+    "document_sha256": "65737cff52d096607d585f9429fb0c793ec2a8bd7e697f809d9239b731abef85",
+    "rule_engine_sha256": "7e4bbce763b791b1edb9286f00252e52d3d4187801d1654e7f8c0901edb2c9e4"
+  },
+  "dependencies": {
+    "anyio": "4.15.1",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "pydantic": "2.14.1",
+    "pydantic_core": "2.50.1",
+    "pytest": "9.1.1"
+  },
+  "digest": "e73b1ed4b2486cebf3bdcc658380466b907cc41536c8279cb9e17725228f4b7d",
+  "files": {
+    "BENCHMARK_SPEC.md": {
+      "group": "document",
+      "sha256": "94b48cab74835688dbde67baca3ac24610ccd21f3eef6fba9d7af34082d51e34"
+    },
+    "CLAUDE.md": {
+      "group": "document",
+      "sha256": "350acf0acfa33936f0410b1da15219ef272eec3af55a17c6b3011b30e866bad9"
+    },
+    "DECISION_POLICY.md": {
+      "group": "document",
+      "sha256": "65737cff52d096607d585f9429fb0c793ec2a8bd7e697f809d9239b731abef85"
+    },
+    "README.md": {
+      "group": "document",
+      "sha256": "ef3d98c8d529e6988adaa899f6e42bef9c01e9b0fc2148ac6f153992a338ea7a"
+    },
+    "pyproject.toml": {
+      "group": "project_config",
+      "sha256": "02d7ef73bdf14b0fab6a7946af11713f758ff185777b184c3e5384e872f19a1d"
+    },
+    "src/sika_guard/__init__.py": {
+      "group": "source_other",
+      "sha256": "a909a51ae137f7111e671150a1468b6f0184e0245c5847ea5a946eff2e499859"
+    },
+    "src/sika_guard/benchmark/__init__.py": {
+      "group": "benchmark_tooling",
+      "sha256": "265dd1285f09f51ef0d5b608c6c76f19bd51afa806f6cfee712ab2c67313714b"
+    },
+    "src/sika_guard/benchmark/__main__.py": {
+      "group": "benchmark_tooling",
+      "sha256": "589a31da7a311054bfc9126d6ea58bae5d3471c5b9a280ce4af890ae2592269b"
+    },
+    "src/sika_guard/benchmark/audit.py": {
+      "group": "benchmark_tooling",
+      "sha256": "50e6f9933d7699646194c7fea3c5cdf1fbf4bf4afcf4de334616ca9295cc459b"
+    },
+    "src/sika_guard/benchmark/binding.py": {
+      "group": "benchmark_tooling",
+      "sha256": "5d6490d6ab84959e249b329a5865dbb6b0bcd09bf3a810f6c26ace3df18a133f"
+    },
+    "src/sika_guard/benchmark/decisions.py": {
+      "group": "benchmark_tooling",
+      "sha256": "f5a464746d22cdeb11a7be7320210ef19d8741f0209d246965939e15a9bbb2fe"
+    },
+    "src/sika_guard/benchmark/devchallenge.py": {
+      "group": "benchmark_tooling",
+      "sha256": "083aebfbba66e90f533e4921049bdbf51598b9a0bb355e07b2cd64b577412732"
+    },
+    "src/sika_guard/benchmark/devrun.py": {
+      "group": "benchmark_tooling",
+      "sha256": "1c395df3fb58bc68c18f7bf485b03cd4f798efeaffcd9c116390269c52f077d6"
+    },
+    "src/sika_guard/benchmark/hidden.py": {
+      "group": "benchmark_tooling",
+      "sha256": "ab86f6e12fa249853e3be474fa9add6c963d95cc960c82621367c367dcc8c9d8"
+    },
+    "src/sika_guard/benchmark/ids.py": {
+      "group": "benchmark_tooling",
+      "sha256": "95408649ef9e751ab1db3b4b70fdfbb57a700f4ceccb13e6e5537372697dea7e"
+    },
+    "src/sika_guard/benchmark/independent.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a3518009daa1bc53a83069d9011fe37eae728f79dbcbb0d97e90eb3b1041ea64"
+    },
+    "src/sika_guard/benchmark/leakage.py": {
+      "group": "benchmark_tooling",
+      "sha256": "58fa1916d5414ef6c844b6e146c16eed9802b8269bff32bd0f79a3f6117efe8d"
+    },
+    "src/sika_guard/benchmark/manifest.py": {
+      "group": "benchmark_tooling",
+      "sha256": "9d8b5ebc4dbf1084bf5375f41ccb94cbf0f1a7bb93ee0079870f5e73b009133c"
+    },
+    "src/sika_guard/benchmark/mockrun.py": {
+      "group": "benchmark_tooling",
+      "sha256": "490dbe4ac07796a1c906d3435abc08c4c7d4443172ee1d5cbb44bfbaffc1dc6b"
+    },
+    "src/sika_guard/benchmark/offline.py": {
+      "group": "benchmark_tooling",
+      "sha256": "3d0cd952a50472fb185e94e26666949f8e27ba125523355279e2e660447e2818"
+    },
+    "src/sika_guard/benchmark/pilot.py": {
+      "group": "benchmark_tooling",
+      "sha256": "d0e3d356f9efb0ec153a9c5a4e9c1064eef2ee586c1952c1d9abccd90898958b"
+    },
+    "src/sika_guard/benchmark/quotas.py": {
+      "group": "benchmark_tooling",
+      "sha256": "7dfdde76398a9fda9d1e9e9b5c324da8f602ed5e69b0b68e76eaecad7417d518"
+    },
+    "src/sika_guard/benchmark/runner.py": {
+      "group": "benchmark_tooling",
+      "sha256": "831b529eee35974c6bb16ddf7a8cfa3827be7b718dc184af6ef22be4c4825ef8"
+    },
+    "src/sika_guard/benchmark/scoring.py": {
+      "group": "benchmark_tooling",
+      "sha256": "fdae8060a6bd3712bf3c838bc7988588a74307f3c1f1230e6ed13438696b226a"
+    },
+    "src/sika_guard/benchmark/seal.py": {
+      "group": "benchmark_tooling",
+      "sha256": "b01df4155c398798989899769850e33a6f467c1d65d550274f6dc036ba145d11"
+    },
+    "src/sika_guard/benchmark/stats.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a6eda117e5cc6323c9a7224028501247096824bb4da0eaf74bc470463eeb38d4"
+    },
+    "src/sika_guard/benchmark/summary.py": {
+      "group": "benchmark_tooling",
+      "sha256": "4d76be97159e7c9407cddb93d41385470b8dd29c56f7aca491ef1b237852c6a1"
+    },
+    "src/sika_guard/benchmark/validate.py": {
+      "group": "benchmark_tooling",
+      "sha256": "fc2522dce49c09be8ffebd7d7c95e8abde07eede50cc6346532ac44ea439cb5a"
+    },
+    "src/sika_guard/benchmark/visible.py": {
+      "group": "benchmark_tooling",
+      "sha256": "a7a278478c393d53a8e779ef43cbef850abe831730d129ecf0818a9577645e75"
+    },
+    "src/sika_guard/coordinator.py": {
+      "group": "frozen_core",
+      "sha256": "ee28f45d0c1c65ce3c7ecdfdc8a6aed15f85b8c69c65bea795d6be98a1b360bb"
+    },
+    "src/sika_guard/evaluate.py": {
+      "group": "frozen_core",
+      "sha256": "bef4ad2eb6c909407fcad753b2c0e1743ac2aa432aa511b9ebfdc7225724d64c"
+    },
+    "src/sika_guard/evaluators/__init__.py": {
+      "group": "source_other",
+      "sha256": "3bc552cc5f897c263da9157b427a41961afd1642c98e92c6d32a148ac9b84169"
+    },
+    "src/sika_guard/evaluators/adjudicate.py": {
+      "group": "frozen_core",
+      "sha256": "224165d37e381b5dd6f44e695d561dfed9c1c8d7338260d91cc0d055033ac0d4"
+    },
+    "src/sika_guard/evaluators/amounts.py": {
+      "group": "frozen_core",
+      "sha256": "e5ae1c9ecd3991fd85b7e7e61e837c7fc0a28852aaacfb0772a2c7f5cc5b6bb1"
+    },
+    "src/sika_guard/evaluators/contract.py": {
+      "group": "frozen_core",
+      "sha256": "544b941f17c6003c1943cad806a721e989bbccc466b0016fceec0836aaa98822"
+    },
+    "src/sika_guard/evaluators/crosscheck.py": {
+      "group": "frozen_core",
+      "sha256": "ac616d64e8a914ef44fcf8a91d65049901fa38b5ef9ade54a047027e06684dbd"
+    },
+    "src/sika_guard/evaluators/grounding.py": {
+      "group": "frozen_core",
+      "sha256": "ce013abb649c3741581e09405da6e97f33c99c768a5797964cf51d3e095b9a90"
+    },
+    "src/sika_guard/evaluators/llm.py": {
+      "group": "frozen_core",
+      "sha256": "da873ae38cbb351095e14321641eaf572659b98a0a43cfa3c019647d8deb8f35"
+    },
+    "src/sika_guard/evaluators/mocks.py": {
+      "group": "frozen_core",
+      "sha256": "84a1b1ecb6f9a15739a278736b5d02cf8f66cf33715e2fc9628c55fff82f1540"
+    },
+    "src/sika_guard/evaluators/payloads.py": {
+      "group": "frozen_core",
+      "sha256": "2b72058b820d73a8ff80d5fd6bec4ce9f800a9624b0e5f4ec97e7a501915051d"
+    },
+    "src/sika_guard/evaluators/prompts.py": {
+      "group": "frozen_core",
+      "sha256": "851292b413a9ef4bc30fc7a9a12844528822ed25239c1f5b43b61acfd2c3f412"
+    },
+    "src/sika_guard/evaluators/scanner.py": {
+      "group": "frozen_core",
+      "sha256": "a531afecec0aa1d5ea30e0c39d9e03c30874df4a1f057dda6202922ce43b60cd"
+    },
+    "src/sika_guard/experiment.py": {
+      "group": "frozen_core",
+      "sha256": "cd57955acfd73e8da9f9e6601d4b14f1db6dcdbd91e478a8d9b36f6aefc8d9fc"
+    },
+    "src/sika_guard/fixtures/__init__.py": {
+      "group": "source_other",
+      "sha256": "3bcf37580b9dfc106695375ac57a07a536bd3bdb7ca7f5d8bfd85ffc0e04e11e"
+    },
+    "src/sika_guard/fixtures/builders.py": {
+      "group": "development_data",
+      "sha256": "ca0d4ddc0e08d09daefb7f7f094c7f163e578f6fe4e84d545c32fb8e5e1789e2"
+    },
+    "src/sika_guard/fixtures/cases.py": {
+      "group": "development_data",
+      "sha256": "e876847d79461f11cad4fc705c752cae3d395f1998c6c33f1af48b848ffd798c"
+    },
+    "src/sika_guard/fixtures/labels.py": {
+      "group": "development_data",
+      "sha256": "fb6e9829a7b411636f687be86d7b17d172c3fa2d1da642081e19cc54c169d1ae"
+    },
+    "src/sika_guard/labels.py": {
+      "group": "development_data",
+      "sha256": "fc828022cf8a42da3b5dea1e0d02bb207618464309439c9a91901eceadf76074"
+    },
+    "src/sika_guard/models.py": {
+      "group": "frozen_core",
+      "sha256": "d9d3d0349bbd1c5d660318b18c67645da103962ac7e60a604c4d880458389fb9"
+    },
+    "src/sika_guard/money.py": {
+      "group": "frozen_core",
+      "sha256": "0dcffef5ba4c943ec0ec6fb0091333f0b768d12744433c7c3c68ef8b2c8b9374"
+    },
+    "src/sika_guard/policy.py": {
+      "group": "frozen_core",
+      "sha256": "7e4bbce763b791b1edb9286f00252e52d3d4187801d1654e7f8c0901edb2c9e4"
+    },
+    "tests/audit_benchmark_scenarios.py": {
+      "group": "tests",
+      "sha256": "bacb6065212ca70b4d56d208984dd38b97fede51f77d684a18a1f7f6fb99d52e"
+    },
+    "tests/audit_scenarios.py": {
+      "group": "tests",
+      "sha256": "4fd45f0d4fb2fbff0fcaada543641d8307b85734cb38938c2bdc01878236eed1"
+    },
+    "tests/data/recorded_replies.json": {
+      "group": "development_data",
+      "sha256": "e3d604a7346fe12d68bc01cccd98f616303295641d5c1a78241a7f2180b02225"
+    },
+    "tests/directionb_reproductions.py": {
+      "group": "tests",
+      "sha256": "4632fdfc4bc37cec10656037f80297ad92dcd28ed4460f2d17e2d6898cf8164a"
+    },
+    "tests/directionb_scenarios.py": {
+      "group": "tests",
+      "sha256": "4e1bab41f8af5cb9eb23073e5ecbb02214664053de0182fe5c9a99e46cd16493"
+    },
+    "tests/fakes.py": {
+      "group": "tests",
+      "sha256": "f22dd552ce4455f369a8e6cd3c1f8f3895c514ca117d481de4e7d99c70a86c6d"
+    },
+    "tests/manifest_helper.py": {
+      "group": "tests",
+      "sha256": "fb226d653e9f8cd7fc5e288b16425929514bb1f1d0983ad1efab2a83b44b5882"
+    },
+    "tests/test_adjudication.py": {
+      "group": "tests",
+      "sha256": "45d0c089a161f463b76a65965041d35a9acf7a11a61c1434fe231a092e1360c6"
+    },
+    "tests/test_audit_amounts.py": {
+      "group": "tests",
+      "sha256": "77c0fbae7c5f099246721a05895485838e208367745c070ec84bae471da3f218"
+    },
+    "tests/test_audit_benchmark.py": {
+      "group": "tests",
+      "sha256": "5e5514e1fbe5ea0184e052efb71b6eba19ad4834d742c9b31b68859bc95c0499"
+    },
+    "tests/test_audit_regressions.py": {
+      "group": "tests",
+      "sha256": "fe763de6056cccc71dd033454dc42c995177a2fc2e645f9cb20c6b92e81e6721"
+    },
+    "tests/test_benchmark_docs.py": {
+      "group": "tests",
+      "sha256": "50b196412bb9678589ea917d621201c9b7b9bd454d611283c3f7992c9f4d0ecc"
+    },
+    "tests/test_benchmark_leakage.py": {
+      "group": "tests",
+      "sha256": "3971d7fcb82f6fc56fdccdf60a228771386a2afe1fe1dc4a6550a022b65e3616"
+    },
+    "tests/test_benchmark_manifest.py": {
+      "group": "tests",
+      "sha256": "b5c7029ca4872271120b6b860be31311d68073b6ea916282e706d64a76093633"
+    },
+    "tests/test_benchmark_schema.py": {
+      "group": "tests",
+      "sha256": "3b8b899fbdda957a416210d914506c10e002e711b51187f593eda7b1ac32e76e"
+    },
+    "tests/test_benchmark_scoring.py": {
+      "group": "tests",
+      "sha256": "62377ca8612b2cbc4f929a045835abbaee24b2bd19bde8d823b12ca80097637f"
+    },
+    "tests/test_benchmark_validation.py": {
+      "group": "tests",
+      "sha256": "fa34bd086cfaab363e592fcfe585b532b20cc7239526d2ce5d109ded24a1551d"
+    },
+    "tests/test_condition_c.py": {
+      "group": "tests",
+      "sha256": "1e4af07568f76465feebbf59fa9d10d566c5aeae7af238ff78a06a08e3e1d63d"
+    },
+    "tests/test_conditions_b3_bc.py": {
+      "group": "tests",
+      "sha256": "4184e1e25c83ed555880a7c81dfe8df7911e2c41cf06bf2dec60e8d29b13f438"
+    },
+    "tests/test_contract_repair.py": {
+      "group": "tests",
+      "sha256": "7ee747408b3a7e702a480a07be9d4e7590de46d6bc8b7ed34f0059bb689df6c0"
+    },
+    "tests/test_coordinator.py": {
+      "group": "tests",
+      "sha256": "488262a4f6c5fb8c4e9c07e197fe2c4c92870ea72c13c55ff03b3d2bdc823d5f"
+    },
+    "tests/test_decision_policy.py": {
+      "group": "tests",
+      "sha256": "578c1425437bf98dcf72d77f19c00cc631c6b27e3ae2df26dcee6b336644bc45"
+    },
+    "tests/test_devrun.py": {
+      "group": "tests",
+      "sha256": "c5220e87d0203735e23106f8ae6cabf1da16428aa33d59ef19aac145cd594be7"
+    },
+    "tests/test_direction_b_authority.py": {
+      "group": "tests",
+      "sha256": "74d86a40b25d1e025d594184168e87083dc1db545ed054bb3e6e8926f1b3d16d"
+    },
+    "tests/test_direction_b_binding.py": {
+      "group": "tests",
+      "sha256": "ec8b9aede67327cef8eb733716466b6564a4fdf3ac34dec010e36be43c4a2b41"
+    },
+    "tests/test_direction_b_extraction.py": {
+      "group": "tests",
+      "sha256": "75c5691f350580cdf43c99ad4064f7aafa797029f58bfff78d7e901d865dddb0"
+    },
+    "tests/test_evaluator_contract.py": {
+      "group": "tests",
+      "sha256": "6d8dfe997555a8eb863cd8f395ccad0463b655699ac57e4f91862fa7fae9d98c"
+    },
+    "tests/test_experiment.py": {
+      "group": "tests",
+      "sha256": "23ea09ae182dbab85aa20ac1aaa5a363ad53d968654d97b66d2de3a29113b460"
+    },
+    "tests/test_fixtures.py": {
+      "group": "tests",
+      "sha256": "8085bcd61f3a468278fbd5e54c063baafbb69236b4df17637b93527bade2d608"
+    },
+    "tests/test_flagship.py": {
+      "group": "tests",
+      "sha256": "823a1f82eda90840790f283780e84444ef5d4fb626f68ac922b4a4858123e305"
+    },
+    "tests/test_llm.py": {
+      "group": "tests",
+      "sha256": "eee781571896e0c558a126e07a7efded27c2e4ad64145d940d3cdbadb195cd6f"
+    },
+    "tests/test_money.py": {
+      "group": "tests",
+      "sha256": "df02b2577aa726da1824e094a3b1e5ebe713a75f394e5f1787e443baebeea657"
+    },
+    "tests/test_policy.py": {
+      "group": "tests",
+      "sha256": "28eadc059233a3abab472688a29271bc3ed66d47ea7e78631656e7ca6f1dd102"
+    }
+  },
+  "ground_truth_isolation": {
+    "hidden_modules": [
+      "sika_guard.labels",
+      "sika_guard.fixtures.labels",
+      "sika_guard.benchmark.hidden"
+    ],
+    "inference_side_modules_that_must_not_import_them": [
+      "sika_guard.policy",
+      "sika_guard.coordinator",
+      "sika_guard.evaluators.*",
+      "sika_guard.benchmark.visible",
+      "sika_guard.benchmark.decisions",
+      "sika_guard.benchmark.seal"
+    ],
+    "requirements": [
+      "labels live in a separate file and module and are joined only after the decision log is sealed",
+      "case ids are opaque and carry no information about family, label or split",
+      "no label field name, family name, policy vocabulary or canary string appears in any request",
+      "merchant text stays under untrusted_merchant_content, never in a system prompt"
+    ]
+  },
+  "model_configuration_requirements": {
+    "decoding": {
+      "json_mode": true,
+      "temperature": "unset (provider default) unless declared in the run declaration",
+      "timeout_seconds": 60.0
+    },
+    "environment_variables_required": [
+      "SIKA_GUARD_LLM_BASE_URL",
+      "SIKA_GUARD_LLM_API_KEY",
+      "SIKA_GUARD_LLM_MODEL"
+    ],
+    "model_id": "one fixed model id for the entire run; declared in the run declaration; requested and returned ids recorded per call",
+    "retries": "none; failures are recorded as abstentions",
+    "same_for_all_conditions": [
+      "model id",
+      "decoding settings",
+      "authoritative case information",
+      "aggregation rule",
+      "adjudication and decision policy"
+    ],
+    "secrets": "the API key is never recorded in a manifest, a decision log or a report",
+    "uncontrolled": "the upstream provider behind the endpoint may vary between calls; it is recorded per call and reported as a reproducibility limitation, never forced"
+  },
+  "note": "development run (deterministic); development baseline, never a freeze",
+  "python": {
+    "implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "version": "3.12.10"
+  },
+  "schema": "sika-guard-manifest/1",
+  "status": "development_baseline",
+  "working_tree": {
+    "changed_or_untracked_paths": [
+      ".gitattributes",
+      "audit/challenge_baseline_before_scanner_fix.json",
+      "results/",
+      "src/sika_guard/benchmark/__main__.py",
+      "src/sika_guard/benchmark/devchallenge.py",
+      "src/sika_guard/benchmark/devrun.py",
+      "src/sika_guard/evaluators/amounts.py",
+      "src/sika_guard/evaluators/payloads.py",
+      "src/sika_guard/evaluators/scanner.py",
+      "tests/test_condition_c.py",
+      "tests/test_devrun.py"
+    ],
+    "git_available": true,
+    "head": "b0fcfaca6689c50ee6e2c3d26f8d5c4924f5cc89",
+    "head_matches_working_tree": false,
+    "note": "when head_matches_working_tree is false, HEAD does not identify the evaluated code; use the file hashes"
+  }
+}

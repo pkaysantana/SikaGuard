@@ -1,0 +1,146 @@
+{
+ "note": "Condition A and A+ on the development challenge set BEFORE the scanner attributed unbound documents to the offers they name and BEFORE the amount reader recognised customer-dependent conditions. Kept so that the later change is visible as a change. Development data, deterministic, no model.",
+ "rows": [
+  {
+   "slug": "legit_consistent_lender_document",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": [
+    [
+     "consistent",
+     false
+    ]
+   ]
+  },
+  {
+   "slug": "hard_violation_later_instalment_above_cap",
+   "policy_expected": "BLOCK",
+   "A": "BLOCK",
+   "A_plus": "BLOCK",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "unstructured_unconditional_fee",
+   "policy_expected": "REVIEW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "A_plus_checks": [
+    [
+     "source_conflict",
+     true
+    ]
+   ]
+  },
+  {
+   "slug": "optional_fee_hard_negative",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": [
+    [
+     "consistent",
+     false
+    ]
+   ]
+  },
+  {
+   "slug": "conditional_late_fee_hard_negative",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "multi_offer_document_selected_has_fee",
+   "policy_expected": "REVIEW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "multi_offer_document_other_offer_has_fee",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "customer_specific_condition_hard_negative",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "A_plus_checks": [
+    [
+     "source_conflict",
+     true
+    ]
+   ]
+  },
+  {
+   "slug": "scattered_terms_each_attributed",
+   "policy_expected": "REVIEW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "A_plus_checks": [
+    [
+     "source_conflict",
+     true
+    ],
+    [
+     "source_conflict",
+     true
+    ]
+   ]
+  },
+  {
+   "slug": "scattered_label_and_amount_in_different_sentences",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "merchant_free_text_understated_total",
+   "policy_expected": "REVIEW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "A_plus_checks": [
+    [
+     "contradicted_by_terms",
+     true
+    ]
+   ]
+  },
+  {
+   "slug": "merchant_free_text_true_statement",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": [
+    [
+     "consistent",
+     false
+    ],
+    [
+     "consistent",
+     false
+    ]
+   ]
+  },
+  {
+   "slug": "unrelated_money_in_document",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  },
+  {
+   "slug": "merchant_document_states_a_fee",
+   "policy_expected": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "A_plus_checks": []
+  }
+ ]
+}

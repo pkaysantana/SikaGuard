@@ -54,13 +54,33 @@ class DeterministicScanner:
         )
 
 
+def _names(payload: dict) -> dict[str, list[str]]:
+    """How this request refers to each offer: its id, and any title it was shown for it."""
+    names: dict[str, list[str]] = {}
+    for item in walk_items(payload.get("trusted", {}).get("lender_terms")):
+        names.setdefault(item["offer_id"], []).append(item["offer_id"])
+    for item in walk_items(payload.get("untrusted_merchant_content", {}).get("offer_listings")):
+        if isinstance(item.get("title"), str) and item["title"].strip():
+            names.setdefault(item["offer_id"], []).append(item["title"])
+    return names
+
+
+def _offer_named_in(sentence: str, names: dict[str, list[str]]) -> str | None:
+    """The one offer a sentence names, or None if it names none or several (the scanner does not guess)."""
+    low = sentence.casefold()
+    hits = {oid for oid, labels in names.items() if any(label.casefold() in low for label in labels)}
+    return next(iter(hits)) if len(hits) == 1 else None
+
+
 def scan_claims(payload: dict) -> list[ExtractedClaim]:
-    """Every total, fee or no-fees statement the amount reader can place in a sentence of a source passage, bound to the passage's offer."""
+    """Every total, fee or no-fees statement the amount reader can place in a sentence of a source passage. A passage bound to one offer
+    speaks for that offer; a passage bound to none speaks, sentence by sentence, for the one offer the sentence itself names."""
     claims: list[ExtractedClaim] = []
+    names = _names(payload)
     for section in SOURCE_SECTIONS:
         for item in walk_items(payload.get(section)):
-            offer_id, ref = item.get("offer_id"), item.get("ref")
-            if not isinstance(offer_id, str) or not isinstance(ref, str):
+            bound, ref = item.get("offer_id"), item.get("ref")
+            if not isinstance(ref, str) or not (isinstance(bound, str) or ref.startswith("doc:")):
                 continue
             for field in _TEXT_FIELDS:
                 text = item.get(field)
@@ -68,6 +88,9 @@ def scan_claims(payload: dict) -> list[ExtractedClaim]:
                     continue
                 for sentence in (s.strip() for s in _SENTENCES.split(text)):
                     if len(sentence) < 3:
+                        continue
+                    offer_id = bound if isinstance(bound, str) else _offer_named_in(sentence, names)
+                    if offer_id is None:
                         continue
                     quote = sentence[:_MAX_QUOTE]
                     mentions = scan_amounts(sentence)

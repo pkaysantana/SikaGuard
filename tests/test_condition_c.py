@@ -112,7 +112,9 @@ def test_each_specialist_gets_only_what_its_task_needs():
     # Paths are matched, not values: the customer's own sentence legitimately says "monthly payments".
     assert ".allowed_payee_ids" not in claim and ".max_amount=" not in claim  # mandate fields are the authority analyst's
     assert "].payments[" not in claim and "].payments[" not in authority  # the schedule is the credit analyst's
-    assert ".instruction=" not in terms and ".description=" not in terms and ".statement=" not in terms and ".title=" not in terms
+    # The credit-terms analyst sees a plan's TITLE (and nothing else the merchant wrote) so that it can read a lender document that names plans;
+    # without it a document discussing several plans could not be attributed to the right offer by the one specialist shown it.
+    assert ".instruction=" not in terms and ".description=" not in terms and ".statement=" not in terms and ".title=" in terms
     assert ".description=" not in authority and ".title=" not in authority and ".instruction=" not in authority
     assert "independent_evidence" not in authority and "assertions" not in authority and "assertions" not in terms
 

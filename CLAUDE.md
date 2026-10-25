@@ -64,6 +64,7 @@ sika-guard-eval --condition C --offline review --limit 5 # pipeline check, no cr
 sika-guard-eval --condition C --limit 3                  # live; needs SIKA_GUARD_LLM_* variables
 python -m sika_guard.benchmark pilot-run --out-dir /tmp/pilot   # benchmark tooling on the dev-only pilot; scripted evaluators, no model
 sika-guard-eval --condition A+                           # the deterministic scanner baseline: no model, no network
+python -m sika_guard.benchmark run --cases C --out-dir D --mode deterministic|fake|dev-live   # development runner (dev-live needs --max-calls and --confirm-spend; see DEMO.md)
 python -m sika_guard.benchmark manifest --out manifests/m.json --note "..."            # a development baseline
 python -m sika_guard.benchmark manifest --out manifests/m.json --freeze --approved-by NAME   # refused unless the tree is clean and committed
 ```

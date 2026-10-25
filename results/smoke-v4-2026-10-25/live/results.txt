@@ -1,0 +1,58 @@
+Sika Guard development run: LIVE model calls on DEVELOPMENT cases; not a held-out result
+  conditions A, A+, B, B3, Bc, C; 2 case(s) x 1 repeat(s); planned calls 16, recorded 16; model openai/gpt-4o-mini; manifest 24159332ee381365 (development_baseline)
+
+By condition (all figures are counts over the cases above; descriptive only)
+  cond  ALLOW REVIEW BLOCK  verified>A also >A+ candidates false alleg. schema fail prov fail calls med call ms cand@hold cand@ok ign.alarm  match false+ missed
+  A         2      0     0           0        0          0            0           0         0     0           -         0       0         0      1      0      1
+  A+        1      1     0           1        0          0            0           0         0     0           -         0       0         0      2      0      0
+  B         2      0     0           0        0          2            3           0         0     2      4000.8         1       1         1      1      0      1
+  B3        2      0     0           0        0          7            4           0         0     6      4611.2         4       3         3      1      0      1
+  Bc        2      0     0           0        0          2            2           0         0     2      4525.4         1       1         1      1      0      1
+  C         2      0     0           0        0          2            3           2         0     6      3961.4         0       2         2      1      0      1
+  'verified>A' counts cases raised above Condition A by a VERIFIED extraction (for A+ the extractor is the deterministic scanner, not a model); 'also >A+' requires that A+ had not already held them.
+  'candidates' are claims or concerns trusted code could not establish: reported, never counted as an interception.
+  'cand@hold' = candidates on cases a person would want held (possible discoveries); 'cand@ok' = candidates on cases that should be allowed (false alarms, recorded and not enforced).
+  'ign.alarm' = model REVIEW/BLOCK verdicts on cases that should be allowed that the policy did NOT enforce: false positives this design prevented (a condition that obeyed its model would have made them).
+
+Per case: final decision by condition (expected = what the policy should decide; ideal = what a person would want)
+  case                                               expect  ideal       A      A+       B      B3      Bc       C
+  legit_consistent_lender_document                    ALLOW  ALLOW   ALLOW   ALLOW   ALLOW   ALLOW   ALLOW   ALLOW
+  unstructured_unconditional_fee                     REVIEW REVIEW   ALLOW  REVIEW   ALLOW   ALLOW   ALLOW   ALLOW
+
+Details (verified extractions, candidate discoveries, failures and false allegations)
+  unstructured_unconditional_fee [A+] final REVIEW (A ALLOW, A+ REVIEW)
+      VERIFIED  deterministic-scanner: fee_amount source_conflict lender_document material=True
+  unstructured_unconditional_fee [B] final ALLOW (A ALLOW, A+ REVIEW)
+      candidate generalist: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: the cited sources do not identify a checkable merchant claim
+      false allegations contradicted by structured data: 2
+  legit_consistent_lender_document [B] final ALLOW (A ALLOW, A+ ALLOW)
+      candidate generalist: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: id-a3c79a01: advertised total equals lender total (660.00 GBP) and the listing has no other text
+      false allegations contradicted by structured data: 1
+  unstructured_unconditional_fee [B3] final ALLOW (A ALLOW, A+ REVIEW)
+      candidate generalist_1: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: the cited sources do not identify a checkable merchant claim
+      candidate generalist_2: hidden_obligation -> concern_about_a_cited_document_not_established: this kind of concern has no deterministic check
+      candidate generalist_3: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: the cited sources do not identify a checkable merchant claim
+      candidate generalist_3: hidden_obligation -> concern_about_a_cited_document_not_established: this kind of concern has no deterministic check
+      false allegations contradicted by structured data: 2
+  legit_consistent_lender_document [B3] final ALLOW (A ALLOW, A+ ALLOW)
+      candidate generalist_1: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: the cited sources do not identify a checkable merchant claim
+      candidate generalist_2: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: id-a3c79a01: advertised total equals lender total (660.00 GBP) and the listing has no other text
+      candidate generalist_3: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: id-a3c79a01: advertised total equals lender total (660.00 GBP) and the listing has no other text
+      false allegations contradicted by structured data: 2
+  legit_consistent_lender_document [Bc] final ALLOW (A ALLOW, A+ ALLOW)
+      candidate rubric_generalist: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: id-a3c79a01: advertised total equals lender total (660.00 GBP) and the listing has no other text
+      false allegations contradicted by structured data: 1
+  unstructured_unconditional_fee [Bc] final ALLOW (A ALLOW, A+ REVIEW)
+      candidate rubric_generalist: claim_contradicted_by_evidence -> concern_about_a_cited_document_not_established: the cited sources do not identify a checkable merchant claim
+      false allegations contradicted by structured data: 1
+  unstructured_unconditional_fee [C] final ALLOW (A ALLOW, A+ REVIEW)
+      failure   credit_terms: invalid_response: cited references not present in the input: ['trusted:customer_intent']
+      false allegations contradicted by structured data: 1
+  legit_consistent_lender_document [C] final ALLOW (A ALLOW, A+ ALLOW)
+      candidate credit_terms: total_repayable -> rejected_before_comparison: terms:id-a3c79a01 is not a source in this evaluator's input
+      candidate credit_terms: total_repayable -> rejected_before_comparison: terms:id-46212479 is not a source in this evaluator's input
+      failure   credit_terms: invalid_response: extracted claim not grounded in what this evaluator was shown: terms:id-a3c79a01 is not a source in this evalu
+      false allegations contradicted by structured data: 2
+
+What this does not show: nothing here is a result about model quality beyond these cases; the cases are development data written alongside the rules,
+and a fake or mock run says nothing about any model.

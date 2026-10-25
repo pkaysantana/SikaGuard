@@ -167,3 +167,15 @@ Six levels are kept apart, and a failure at any level is recorded, never an accu
 ### Binding an experiment to a manifest (R10)
 
 A run is bound, before any inference, to a recorded untampered manifest that describes the frozen core, prompts and policy now running, with the declared conditions defined as the manifest defines them; the frozen core must not change during the run, and the seal records all of it. A live run needs a manifest with status `frozen` (a clean committed tree and a named approver). This is the integrity of a **completed** run, not protection against someone who can rewrite the manifest directory, the log and the seal together.
+
+### Hackathon amendment: a fair deterministic baseline and development runs
+
+Writing the development challenge set (`benchmark/devchallenge.py`) showed two weaknesses in the deterministic scanner A+ and the shared amount reader. Neither was fixed in order to favour any condition; both made A+ weaker than a plain parser should be, and both are recorded by `audit/challenge_baseline_before_scanner_fix.json`, which keeps the results from before the change.
+
+* The scanner skipped a lender document that discusses several plans. It now attributes each sentence of such a document to the one plan the sentence names (by title or id), and still does not guess when a sentence names none or several.
+* The amount reader treated "Customers with a credit score below 600 pay a fee of £40" as an obligation on everyone. A charge that depends on a customer attribute ("customers with/who", "applicants", "borrowers", "subject to", "depending on", "where") is now conditional, so it is neither an extracted fee nor a hidden obligation. This applies equally to a model's extraction and to the scanner, because both are verified by the same reader.
+* The credit-terms specialist is now shown each plan's title (and nothing else the merchant wrote), so that the one specialist shown a lender document can name the plan a multi-plan document is about. The prompts are unchanged.
+
+Both changes were made after seeing the development challenge set, which is development data written alongside the rules. They are not evidence of anything about held-out performance.
+
+**Run modes.** `deterministic` (A and A+ only; no model), `fake` (a fake provider through the real client; plumbing, not model output) and `dev-live` (the configured provider, on development cases, bound to a development-baseline manifest, with a mandatory `--max-calls` and an exact `--confirm-spend`). Only a `live` run bound to a frozen manifest can support a held-out claim, and none exists.

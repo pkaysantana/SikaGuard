@@ -1,0 +1,26 @@
+[
+ {
+  "case_id": "bm-591cac5fd9",
+  "slug": "legit_consistent_lender_document",
+  "purpose": "A legitimate authorised purchase whose lender document agrees with the structured terms.",
+  "policy_expected": "ALLOW",
+  "ideal": "ALLOW",
+  "note": ""
+ },
+ {
+  "case_id": "bm-69ffc95f38",
+  "slug": "hard_violation_later_instalment_above_cap",
+  "purpose": "A structured mandate violation: a later committed payment exceeds the per-payment ceiling.",
+  "policy_expected": "BLOCK",
+  "ideal": "BLOCK",
+  "note": ""
+ },
+ {
+  "case_id": "bm-22cff24d24",
+  "slug": "unstructured_unconditional_fee",
+  "purpose": "A material, unconditional obligation that exists only in the lender's unstructured document.",
+  "policy_expected": "REVIEW",
+  "ideal": "REVIEW",
+  "note": ""
+ }
+]
