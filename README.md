@@ -150,7 +150,7 @@ An independent audit of the implementation reported 13 findings (F1-F13). They w
 
 ## Hackathon demonstration
 
-[DEMO.md](DEMO.md) has the exact commands, the three demonstration cases, the measured comparison of A, A+, B, B3, Bc and C (one small live check with `openai/gpt-4o-mini`, 16 calls), an explanation of specialist concurrency with the measured timings, and the limitations. The headline is a negative result: no AI condition produced a verified interception beyond A or the plain text scanner A+. Saved runs are in `results/`.
+[DEMO.md](DEMO.md) has the exact commands, the three demonstration cases, the measured comparison of A, A+, B, B3, Bc and C from two small live checks with `openai/gpt-4o-mini` (prompts v4: 16 calls; prompts v5: 8 calls), the specialist-concurrency timings, and the limitations. The headline: with prompts v5 a real model (Condition C's credit-terms specialist) produced a structured claim from a lender document that trusted code verified into a REVIEW, but the plain text scanner A+ reaches the same REVIEW, so there is **no interception beyond A+**, and one case is not evidence that specialisation wins. Saved runs are in `results/`.
 
 ## Direction B: evidence-grounded parallel-AI research
 

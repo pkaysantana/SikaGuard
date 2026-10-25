@@ -262,3 +262,31 @@ def test_the_v5_validation_cases_are_fresh_neutral_and_kept_apart_from_their_exp
             assert d.text not in old_text
     words = {w for d in EVIDENCE.documents for w in re.findall(r"[a-z]{6,}", d.text.lower())}
     assert not {"arrangement", "instalments", "statement"} & words  # the original smoke case's distinctive vocabulary is not reused
+
+
+# --- the saved v5 live results: what the demonstration says about them is checked against the files --------------------------------------------
+
+
+def test_the_saved_v5_live_results_say_what_the_demo_says_they_say():
+    base = ROOT / "results" / "v5-validation"
+    live = base / "live"
+    verify_gate(live / "decisions.jsonl", base / "v5_cases.jsonl", manifests_dir=live / "manifests")  # sealed and unmodified
+    log = read_run_log(live / "decisions.jsonl")
+    d = log.declaration
+    assert d.mode == "dev-live" and d.model_id == "openai/gpt-4o-mini" and d.planned_calls == 8 and log.summary.calls_recorded == 8
+    expectations = {e["case_id"]: e["slug"] for e in json.loads((base / "v5_expectations.json").read_text(encoding="utf-8"))}
+    rows = {(r.condition.value, expectations[r.record.case_id]): r.record for r in log.records}
+    evidence, legit = "v5_evidence_charge_in_lender_prose", "v5_legit_fee_in_terms_and_optional_service"
+    assert {(c, s): rows[(c, s)].final_decision.value for c in ("A", "A+", "B", "C") for s in (evidence, legit)} == {
+        ("A", evidence): "ALLOW", ("A+", evidence): "REVIEW", ("B", evidence): "ALLOW", ("C", evidence): "REVIEW",
+        ("A", legit): "ALLOW", ("A+", legit): "ALLOW", ("B", legit): "ALLOW", ("C", legit): "ALLOW",
+    }
+    c_record = rows[("C", evidence)]
+    assert c_record.ai_review_routes == ("verified_extraction:lender_document:source_conflict",) and c_record.escalated_by_ai
+    verified = [c for c in c_record.crosschecks if c.enforces]
+    assert [(c.evaluator_id, c.kind.value, c.stated_minor, c.reference_minor) for c in verified] == [("credit_terms", "fee_amount", 3200, 0)]
+    b_record = rows[("B", evidence)]
+    assert b_record.ai_review_routes == () and not any(c.kind.value == "fee_amount" for c in b_record.crosschecks)  # B reported a concern, extracted nothing
+    invalid = sorted((r.condition.value, v.evaluator_id) for r in log.records for v in r.record.verdicts if v.status.value == "invalid_response")
+    assert invalid == [("B", "generalist"), ("C", "credit_terms")]  # two of eight, both on the legitimate case
+    assert {v.prompt_version for r in log.records for v in r.record.verdicts if v.prompt_version} == {"generalist-v5", "merchant-claim-v5", "credit-terms-v5", "authority-v5", "deterministic-scanner-v1"}

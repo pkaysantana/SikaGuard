@@ -1,0 +1,688 @@
+{
+ "run": {
+  "mode": "dev-live",
+  "conditions": [
+   "A",
+   "A+",
+   "B",
+   "C"
+  ],
+  "repeats": 1,
+  "cases": 2,
+  "planned_calls": 8,
+  "model_id": "openai/gpt-4o-mini",
+  "manifest_digest": "3cb4ecd2713cfe8d",
+  "manifest_status": "development_baseline",
+  "complete": true,
+  "calls_recorded": 8,
+  "label": "LIVE model calls on DEVELOPMENT cases; not a held-out result"
+ },
+ "summary": {
+  "A": {
+   "cases": 2,
+   "final": {
+    "ALLOW": 2,
+    "REVIEW": 0,
+    "BLOCK": 0
+   },
+   "verified_ai_interceptions_over_A": 0,
+   "verified_ai_interceptions_over_A_and_A_plus": 0,
+   "interceptions_over_A_not_attributable_to_a_verified_extraction": 0,
+   "candidate_discoveries": 0,
+   "document_concerns": 0,
+   "ignored_model_alarms": 0,
+   "claims_extracted": 0,
+   "false_allegations": 0,
+   "unverified_findings": 0,
+   "verdicts": 0,
+   "failures": 0,
+   "schema_failures": 0,
+   "provider_failures": 0,
+   "abstentions": 0,
+   "calls": 0,
+   "median_call_latency_ms": null,
+   "median_wall_ms_per_case": 0.2,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "candidates_where_ideal_is_not_allow": 0,
+   "ignored_alarms_on_cases_to_allow": 0,
+   "candidates_where_ideal_is_allow": 0,
+   "matches_policy_expected": 1,
+   "false_positives": 0,
+   "missed": 1,
+   "ideal_not_reached": 1
+  },
+  "A+": {
+   "cases": 2,
+   "final": {
+    "ALLOW": 1,
+    "REVIEW": 1,
+    "BLOCK": 0
+   },
+   "verified_ai_interceptions_over_A": 1,
+   "verified_ai_interceptions_over_A_and_A_plus": 0,
+   "interceptions_over_A_not_attributable_to_a_verified_extraction": 0,
+   "candidate_discoveries": 0,
+   "document_concerns": 0,
+   "ignored_model_alarms": 0,
+   "claims_extracted": 2,
+   "false_allegations": 0,
+   "unverified_findings": 0,
+   "verdicts": 2,
+   "failures": 0,
+   "schema_failures": 0,
+   "provider_failures": 0,
+   "abstentions": 0,
+   "calls": 0,
+   "median_call_latency_ms": null,
+   "median_wall_ms_per_case": 1.2,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "candidates_where_ideal_is_not_allow": 0,
+   "ignored_alarms_on_cases_to_allow": 0,
+   "candidates_where_ideal_is_allow": 0,
+   "matches_policy_expected": 2,
+   "false_positives": 0,
+   "missed": 0,
+   "ideal_not_reached": 0
+  },
+  "B": {
+   "cases": 2,
+   "final": {
+    "ALLOW": 2,
+    "REVIEW": 0,
+    "BLOCK": 0
+   },
+   "verified_ai_interceptions_over_A": 0,
+   "verified_ai_interceptions_over_A_and_A_plus": 0,
+   "interceptions_over_A_not_attributable_to_a_verified_extraction": 0,
+   "candidate_discoveries": 1,
+   "document_concerns": 1,
+   "ignored_model_alarms": 1,
+   "claims_extracted": 2,
+   "false_allegations": 1,
+   "unverified_findings": 1,
+   "verdicts": 2,
+   "failures": 1,
+   "schema_failures": 1,
+   "provider_failures": 0,
+   "abstentions": 0,
+   "calls": 2,
+   "median_call_latency_ms": 4890.1,
+   "median_wall_ms_per_case": 4891.4,
+   "prompt_tokens": 6871,
+   "completion_tokens": 914,
+   "provider_cost_unit_unknown": "0.00157905",
+   "candidates_where_ideal_is_not_allow": 1,
+   "ignored_alarms_on_cases_to_allow": 0,
+   "candidates_where_ideal_is_allow": 0,
+   "matches_policy_expected": 1,
+   "false_positives": 0,
+   "missed": 1,
+   "ideal_not_reached": 1
+  },
+  "C": {
+   "cases": 2,
+   "final": {
+    "ALLOW": 1,
+    "REVIEW": 1,
+    "BLOCK": 0
+   },
+   "verified_ai_interceptions_over_A": 1,
+   "verified_ai_interceptions_over_A_and_A_plus": 0,
+   "interceptions_over_A_not_attributable_to_a_verified_extraction": 0,
+   "candidate_discoveries": 1,
+   "document_concerns": 1,
+   "ignored_model_alarms": 5,
+   "claims_extracted": 5,
+   "false_allegations": 7,
+   "unverified_findings": 2,
+   "verdicts": 6,
+   "failures": 1,
+   "schema_failures": 1,
+   "provider_failures": 0,
+   "abstentions": 0,
+   "calls": 6,
+   "median_call_latency_ms": 3683.7,
+   "median_wall_ms_per_case": 4147.1,
+   "prompt_tokens": 16977,
+   "completion_tokens": 1876,
+   "provider_cost_unit_unknown": "0.00295215",
+   "candidates_where_ideal_is_not_allow": 1,
+   "ignored_alarms_on_cases_to_allow": 2,
+   "candidates_where_ideal_is_allow": 0,
+   "matches_policy_expected": 2,
+   "false_positives": 0,
+   "missed": 0,
+   "ideal_not_reached": 0
+  }
+ },
+ "rows": [
+  {
+   "condition": "A",
+   "repeat": 1,
+   "case_id": "bm-3eb5d427d0",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "bases": [
+    "allow"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 0,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [],
+   "findings": 0,
+   "false_allegations": 0,
+   "document_concerns": 0,
+   "unverified_findings": 0,
+   "verdict_statuses": {},
+   "schema_valid_verdicts": 0,
+   "verdicts": 0,
+   "failures": [],
+   "coverage": "not_applicable",
+   "uncertainty": [],
+   "calls": 0,
+   "call_latency_ms": [],
+   "wall_ms": 0.3,
+   "ai_stage_ms": 0.0,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "providers": [],
+   "returned_models": [],
+   "models_requested": [],
+   "slug": "v5_legit_fee_in_terms_and_optional_service",
+   "policy_expected": "ALLOW",
+   "ideal": "ALLOW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  },
+  {
+   "condition": "A",
+   "repeat": 1,
+   "case_id": "bm-7d3941e4e2",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "bases": [
+    "allow"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 0,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [],
+   "findings": 0,
+   "false_allegations": 0,
+   "document_concerns": 0,
+   "unverified_findings": 0,
+   "verdict_statuses": {},
+   "schema_valid_verdicts": 0,
+   "verdicts": 0,
+   "failures": [],
+   "coverage": "not_applicable",
+   "uncertainty": [],
+   "calls": 0,
+   "call_latency_ms": [],
+   "wall_ms": 0.2,
+   "ai_stage_ms": 0.0,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "providers": [],
+   "returned_models": [],
+   "models_requested": [],
+   "slug": "v5_evidence_charge_in_lender_prose",
+   "policy_expected": "REVIEW",
+   "ideal": "REVIEW",
+   "matches_policy_expected": false,
+   "false_positive": false,
+   "missed": true,
+   "ideal_not_reached": true
+  },
+  {
+   "condition": "A+",
+   "repeat": 1,
+   "case_id": "bm-7d3941e4e2",
+   "final": "REVIEW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "escalated_above_rule_engine": true,
+   "incremental_over_A": true,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [
+    {
+     "evaluator": "deterministic-scanner",
+     "kind": "fee_amount",
+     "offer": "id-0982cb0e",
+     "outcome": "source_conflict",
+     "source": "lender_document",
+     "direction": "overstates_cost",
+     "material": true,
+     "enforces": true,
+     "detail": "the lender's document states mandatory fees of 32.00 GBP but the structured terms say 0.00 GBP (32.00 GBP not in the terms); which governs is unresolved"
+    }
+   ],
+   "claims_extracted": 1,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [],
+   "findings": 0,
+   "false_allegations": 0,
+   "document_concerns": 0,
+   "unverified_findings": 0,
+   "verdict_statuses": {
+    "ok": 1
+   },
+   "schema_valid_verdicts": 1,
+   "verdicts": 1,
+   "failures": [],
+   "coverage": "complete",
+   "uncertainty": [],
+   "calls": 0,
+   "call_latency_ms": [],
+   "wall_ms": 1.4,
+   "ai_stage_ms": 0.7,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "providers": [],
+   "returned_models": [],
+   "models_requested": [],
+   "slug": "v5_evidence_charge_in_lender_prose",
+   "policy_expected": "REVIEW",
+   "ideal": "REVIEW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  },
+  {
+   "condition": "A+",
+   "repeat": 1,
+   "case_id": "bm-3eb5d427d0",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "bases": [
+    "allow"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 1,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [],
+   "findings": 0,
+   "false_allegations": 0,
+   "document_concerns": 0,
+   "unverified_findings": 0,
+   "verdict_statuses": {
+    "ok": 1
+   },
+   "schema_valid_verdicts": 1,
+   "verdicts": 1,
+   "failures": [],
+   "coverage": "complete",
+   "uncertainty": [],
+   "calls": 0,
+   "call_latency_ms": [],
+   "wall_ms": 1.0,
+   "ai_stage_ms": 0.5,
+   "prompt_tokens": null,
+   "completion_tokens": null,
+   "provider_cost_unit_unknown": null,
+   "providers": [],
+   "returned_models": [],
+   "models_requested": [],
+   "slug": "v5_legit_fee_in_terms_and_optional_service",
+   "policy_expected": "ALLOW",
+   "ideal": "ALLOW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  },
+  {
+   "condition": "B",
+   "repeat": 1,
+   "case_id": "bm-7d3941e4e2",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 2,
+   "candidate_discoveries": [
+    {
+     "evaluator": "generalist",
+     "kind": "hidden_obligation",
+     "offer": null,
+     "outcome": "concern_about_a_cited_document_not_established",
+     "detail": "this kind of concern has no deterministic check"
+    }
+   ],
+   "unenforced_model_concerns": [
+    {
+     "evaluator": "generalist",
+     "model_verdict": "REVIEW",
+     "counted_as": "ALLOW"
+    }
+   ],
+   "findings": 2,
+   "false_allegations": 1,
+   "document_concerns": 1,
+   "unverified_findings": 1,
+   "verdict_statuses": {
+    "ok": 1
+   },
+   "schema_valid_verdicts": 1,
+   "verdicts": 1,
+   "failures": [],
+   "coverage": "complete",
+   "uncertainty": [
+    "unverified_finding:generalist:hidden_obligation"
+   ],
+   "calls": 1,
+   "call_latency_ms": [
+    4418.5
+   ],
+   "wall_ms": 4420.0,
+   "ai_stage_ms": 4419.3,
+   "prompt_tokens": 3420,
+   "completion_tokens": 376,
+   "provider_cost_unit_unknown": "0.0007386",
+   "providers": [
+    "OpenAI"
+   ],
+   "returned_models": [
+    "openai/gpt-4o-mini"
+   ],
+   "models_requested": [
+    "openai/gpt-4o-mini"
+   ],
+   "slug": "v5_evidence_charge_in_lender_prose",
+   "policy_expected": "REVIEW",
+   "ideal": "REVIEW",
+   "matches_policy_expected": false,
+   "false_positive": false,
+   "missed": true,
+   "ideal_not_reached": true
+  },
+  {
+   "condition": "B",
+   "repeat": 1,
+   "case_id": "bm-3eb5d427d0",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 0,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [],
+   "findings": 0,
+   "false_allegations": 0,
+   "document_concerns": 0,
+   "unverified_findings": 0,
+   "verdict_statuses": {
+    "invalid_response": 1
+   },
+   "schema_valid_verdicts": 0,
+   "verdicts": 1,
+   "failures": [
+    {
+     "evaluator": "generalist",
+     "status": "invalid_response",
+     "reason": "schema validation failed (findings.0.explanation: extra_forbidden; findings.1.explanation: extra_forbidden)"
+    }
+   ],
+   "coverage": "unavailable",
+   "uncertainty": [
+    "evaluator_failure:generalist:invalid_response"
+   ],
+   "calls": 1,
+   "call_latency_ms": [
+    5361.8
+   ],
+   "wall_ms": 5362.8,
+   "ai_stage_ms": 5362.5,
+   "prompt_tokens": 3451,
+   "completion_tokens": 538,
+   "provider_cost_unit_unknown": "0.00084045",
+   "providers": [
+    "Azure"
+   ],
+   "returned_models": [
+    "openai/gpt-4o-mini"
+   ],
+   "models_requested": [
+    "openai/gpt-4o-mini"
+   ],
+   "slug": "v5_legit_fee_in_terms_and_optional_service",
+   "policy_expected": "ALLOW",
+   "ideal": "ALLOW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  },
+  {
+   "condition": "C",
+   "repeat": 1,
+   "case_id": "bm-7d3941e4e2",
+   "final": "REVIEW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "REVIEW",
+   "bases": [
+    "review_unresolved_evidence_conflict"
+   ],
+   "routes": [
+    "verified_extraction:lender_document:source_conflict"
+   ],
+   "escalated_above_rule_engine": true,
+   "incremental_over_A": true,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [
+    {
+     "evaluator": "credit_terms",
+     "kind": "fee_amount",
+     "offer": "id-0982cb0e",
+     "outcome": "source_conflict",
+     "source": "lender_document",
+     "direction": "overstates_cost",
+     "material": true,
+     "enforces": true,
+     "detail": "the lender's document states mandatory fees of 32.00 GBP but the structured terms say 0.00 GBP (32.00 GBP not in the terms); which governs is unresolved"
+    }
+   ],
+   "claims_extracted": 3,
+   "candidate_discoveries": [
+    {
+     "evaluator": "credit_terms",
+     "kind": "claim_contradicted_by_evidence",
+     "offer": null,
+     "outcome": "concern_about_a_cited_document_not_established",
+     "detail": "the cited sources do not identify a checkable merchant claim"
+    }
+   ],
+   "unenforced_model_concerns": [
+    {
+     "evaluator": "merchant_claim",
+     "model_verdict": "BLOCK",
+     "counted_as": "ALLOW"
+    },
+    {
+     "evaluator": "credit_terms",
+     "model_verdict": "REVIEW",
+     "counted_as": "ALLOW"
+    },
+    {
+     "evaluator": "authority",
+     "model_verdict": "BLOCK",
+     "counted_as": "ALLOW"
+    }
+   ],
+   "findings": 6,
+   "false_allegations": 5,
+   "document_concerns": 1,
+   "unverified_findings": 1,
+   "verdict_statuses": {
+    "ok": 3
+   },
+   "schema_valid_verdicts": 3,
+   "verdicts": 3,
+   "failures": [],
+   "coverage": "complete",
+   "uncertainty": [
+    "unverified_finding:credit_terms:claim_contradicted_by_evidence"
+   ],
+   "calls": 3,
+   "call_latency_ms": [
+    3471.0,
+    4190.8,
+    2782.8
+   ],
+   "wall_ms": 4195.1,
+   "ai_stage_ms": 4192.8,
+   "prompt_tokens": 8483,
+   "completion_tokens": 949,
+   "provider_cost_unit_unknown": "0.00155385",
+   "providers": [
+    "OpenAI"
+   ],
+   "returned_models": [
+    "openai/gpt-4o-mini"
+   ],
+   "models_requested": [
+    "openai/gpt-4o-mini"
+   ],
+   "slug": "v5_evidence_charge_in_lender_prose",
+   "policy_expected": "REVIEW",
+   "ideal": "REVIEW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  },
+  {
+   "condition": "C",
+   "repeat": 1,
+   "case_id": "bm-3eb5d427d0",
+   "final": "ALLOW",
+   "deterministic_A": "ALLOW",
+   "A": "ALLOW",
+   "A_plus": "ALLOW",
+   "bases": [
+    "allow_with_recorded_uncertainty"
+   ],
+   "routes": [],
+   "escalated_above_rule_engine": false,
+   "incremental_over_A": false,
+   "incremental_over_A_plus": false,
+   "verified_extractions": [],
+   "claims_extracted": 2,
+   "candidate_discoveries": [],
+   "unenforced_model_concerns": [
+    {
+     "evaluator": "merchant_claim",
+     "model_verdict": "REVIEW",
+     "counted_as": "ALLOW"
+    },
+    {
+     "evaluator": "authority",
+     "model_verdict": "REVIEW",
+     "counted_as": "ALLOW"
+    }
+   ],
+   "findings": 3,
+   "false_allegations": 2,
+   "document_concerns": 0,
+   "unverified_findings": 1,
+   "verdict_statuses": {
+    "invalid_response": 1,
+    "ok": 2
+   },
+   "schema_valid_verdicts": 2,
+   "verdicts": 3,
+   "failures": [
+    {
+     "evaluator": "credit_terms",
+     "status": "invalid_response",
+     "reason": "cited references not present in the input: ['doc:id-4cb93a6']"
+    }
+   ],
+   "coverage": "partial",
+   "uncertainty": [
+    "evaluator_failure:credit_terms:invalid_response",
+    "unverified_finding:merchant_claim:claim_unverified"
+   ],
+   "calls": 3,
+   "call_latency_ms": [
+    3896.3,
+    4095.3,
+    2060.1
+   ],
+   "wall_ms": 4099.2,
+   "ai_stage_ms": 4097.5,
+   "prompt_tokens": 8494,
+   "completion_tokens": 927,
+   "provider_cost_unit_unknown": "0.00139830",
+   "providers": [
+    "Azure",
+    "OpenAI"
+   ],
+   "returned_models": [
+    "openai/gpt-4o-mini"
+   ],
+   "models_requested": [
+    "openai/gpt-4o-mini"
+   ],
+   "slug": "v5_legit_fee_in_terms_and_optional_service",
+   "policy_expected": "ALLOW",
+   "ideal": "ALLOW",
+   "matches_policy_expected": true,
+   "false_positive": false,
+   "missed": false,
+   "ideal_not_reached": false
+  }
+ ]
+}

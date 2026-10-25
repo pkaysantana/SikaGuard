@@ -1,0 +1,12 @@
+{
+ "schema": "sika-guard-seal/3",
+ "log": "decisions.jsonl",
+ "log_sha256": "27ee5cbaa746b662e7fedda27072ec3af1b992b0f5a8ecf79bf7dbb6612d80db",
+ "lines": 10,
+ "cases_sha256": "f00ce593a9bb2d38d353a7beefe7e0255485663aae2b1193c5e069cee3e4c9ba",
+ "manifest_digest": "3cb4ecd2713cfe8d05602fa5d8bb7108b30555055623ec91976f573f314f6647",
+ "manifest_status": "development_baseline",
+ "frozen_core_sha256": "a92440f6d0b6993dbabc2c55b947a955f8d179584d8a73a6c0807d70de318b4c",
+ "conditions_sha256": "e7c6205f55f8131d77c7b4cc113d31dfd0f748dacd1547c185a9591e3be9093e",
+ "mode": "dev-live"
+}
