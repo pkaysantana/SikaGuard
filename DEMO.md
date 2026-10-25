@@ -110,3 +110,13 @@ Concurrency is not a speed-up over one call (B's median per-case time was 4.0 s 
 * **Prompts v4 have had only this one 16-call live check.** The model noticed the fee but did not use the extraction channel; changing the prompt to coax it would be tuning on development data and was deliberately not done.
 * **Run integrity is procedural.** Runs are bound to a recorded manifest, but nobody has approved a frozen manifest, and the manifest, log and seal are files a determined operator could rewrite together.
 * **Not built:** a held-out dataset, repeated-run statistics, a frontend, any payment integration.
+
+## Next live check (prepared, NOT run)
+
+Prompts v5 repair the extraction contract (see `DECISION_POLICY.md`). They have had no live check. The prepared validation uses two **fresh** development cases (`results/v5-validation/`), conditions A, A+, B and C only, 8 paid calls at most, no retries:
+
+```bash
+python -m sika_guard.benchmark run --cases results/v5-validation/v5_cases.jsonl --expectations results/v5-validation/v5_expectations.json --out-dir results/v5-validation/live --conditions A,A+,B,C --mode dev-live --max-calls 8 --confirm-spend 8
+```
+
+The v4 results above remain v4 results and are not re-labelled.

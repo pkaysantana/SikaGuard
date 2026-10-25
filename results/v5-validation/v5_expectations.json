@@ -1,0 +1,18 @@
+[
+ {
+  "case_id": "bm-3eb5d427d0",
+  "slug": "v5_legit_fee_in_terms_and_optional_service",
+  "purpose": "A legitimate purchase: the one mandatory fee the document states is already in the structured terms, and the other is a service the customer chooses.",
+  "policy_expected": "ALLOW",
+  "ideal": "ALLOW",
+  "note": ""
+ },
+ {
+  "case_id": "bm-7d3941e4e2",
+  "slug": "v5_evidence_charge_in_lender_prose",
+  "purpose": "A material mandatory charge that exists only in the lender's unstructured document.",
+  "policy_expected": "REVIEW",
+  "ideal": "REVIEW",
+  "note": ""
+ }
+]

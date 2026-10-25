@@ -69,9 +69,9 @@ def evaluate_with(provider: FakeProvider, case_id="case-05", spec=GENERALIST, **
 # --- prompts: v2 and still static, label-free ---------------------------------
 
 
-def test_every_role_prompt_is_version_4():
+def test_every_role_prompt_is_version_5():
     assert [s.prompt_version for s in (GENERALIST, *SPECIALISTS)] == [
-        "generalist-v4", "merchant-claim-v4", "credit-terms-v4", "authority-v4",
+        "generalist-v5", "merchant-claim-v5", "credit-terms-v5", "authority-v5",
     ]
 
 

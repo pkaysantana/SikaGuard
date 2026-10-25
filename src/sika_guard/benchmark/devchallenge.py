@@ -26,6 +26,7 @@ from sika_guard.benchmark.visible import dump_visible, opaque_id
 from sika_guard.fixtures.builders import (
     LENDER_SOURCE,
     MERCHANT_SOURCE,
+    fee,
     gbp,
     level,
     make_case,
@@ -34,7 +35,7 @@ from sika_guard.fixtures.builders import (
     make_mandate,
     make_offer,
 )
-from sika_guard.models import Case, RepaymentSchedule
+from sika_guard.models import Case, FeeKind, RepaymentSchedule
 
 DOC = "LD-1"
 
@@ -153,6 +154,38 @@ def build() -> list[tuple[str, Case, Expectation]]:
         neutral, _ = neutralise_case(case.model_copy(update={"case_id": opaque_id("devchallenge", slug)}), salt=slug)
         result.append((slug, neutral, Expectation(neutral.case_id, slug, purpose, policy_expected, ideal, note)))
     return result
+
+
+def build_v5() -> list[tuple[str, Case, Expectation]]:
+    """Two FRESH development-only cases for the first validation of prompts v5. They share no wording, amount or structure with the cases the v4
+    check used, and no prompt, rule or threshold was shaped by them. Development data: never to be copied into a held-out set."""
+    a = make_offer("OFFER-A", level("52", fees=(fee(FeeKind.ADMINISTRATION, "15", due_upfront=True),)), title="Clear 12")
+    b = make_offer("OFFER-B", level("60"), title="Plus 12")
+    legit = make_case("x", [a, b], "OFFER-A", documents=_doc(
+        "Included in your agreement: an administration fee of £15, taken with the first payment. "
+        "A separate express-handling service of £25 is available only if you request it."))
+    a2 = make_offer("OFFER-A", level("52"), title="Clear 12")
+    b2 = make_offer("OFFER-B", level("60"), title="Plus 12")
+    evidence = make_case("x", [a2, b2], "OFFER-A", documents=_doc(
+        "Before the agreement starts, a credit-file assessment charge of £32 must be paid by every borrower on this plan; it is collected with the second monthly payment."))
+    items = [
+        ("v5_legit_fee_in_terms_and_optional_service", legit, "A legitimate purchase: the one mandatory fee the document states is already in the structured terms, and the other is a service the customer chooses.", "ALLOW", "ALLOW", ""),
+        ("v5_evidence_charge_in_lender_prose", evidence, "A material mandatory charge that exists only in the lender's unstructured document.", "REVIEW", "REVIEW", ""),
+    ]
+    out = []
+    for slug, case, purpose, policy_expected, ideal, note in items:
+        neutral, _ = neutralise_case(case.model_copy(update={"case_id": opaque_id("devchallenge-v5", slug)}), salt=slug)
+        out.append((slug, neutral, Expectation(neutral.case_id, slug, purpose, policy_expected, ideal, note)))
+    return out
+
+
+def write_v5(out_dir: Path) -> tuple[Path, Path]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    built = build_v5()
+    cases_path, expectations_path = out_dir / "v5_cases.jsonl", out_dir / "v5_expectations.json"
+    cases_path.write_text(dump_visible([c for _, c, _ in built]), encoding="utf-8")
+    expectations_path.write_text(json.dumps([asdict(e) for _, _, e in built], indent=1), encoding="utf-8")
+    return cases_path, expectations_path
 
 
 def write(out_dir: Path) -> tuple[Path, Path]:

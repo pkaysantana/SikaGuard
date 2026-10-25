@@ -93,7 +93,7 @@ def test_b3_is_matched_to_c_in_calls_and_bc_to_b():
 
 def test_b3_samples_are_the_same_prompt_and_payload_under_distinct_ids():
     assert {s.system_prompt for s in GENERALIST_SAMPLES} == {GENERALIST.system_prompt}
-    assert {s.prompt_version for s in GENERALIST_SAMPLES} == {GENERALIST.prompt_version} == {"generalist-v4"}
+    assert {s.prompt_version for s in GENERALIST_SAMPLES} == {GENERALIST.prompt_version} == {"generalist-v5"}
     assert len({s.evaluator_id for s in GENERALIST_SAMPLES}) == 3
     assert all(s.build_payload is GENERALIST.build_payload for s in GENERALIST_SAMPLES)
 
@@ -135,7 +135,7 @@ def test_the_rubric_prompt_covers_all_three_specialist_remits_and_reuses_the_sha
     text = RUBRIC_GENERALIST.system_prompt
     for rubric in ("Rubric 1, merchant claims", "Rubric 2, credit terms", "Rubric 3, authority"):
         assert rubric in text
-    assert RUBRIC_GENERALIST.prompt_version == "rubric-generalist-v4" and RUBRIC_GENERALIST.role is EvaluatorRole.RUBRIC_GENERALIST
+    assert RUBRIC_GENERALIST.prompt_version == "rubric-generalist-v5" and RUBRIC_GENERALIST.role is EvaluatorRole.RUBRIC_GENERALIST
     shared = GENERALIST.system_prompt.split("Your role:")[0]
     assert text.startswith(shared)  # the same evidence, grounding and format rules as every other condition
     assert all(s.system_prompt.split("Your role:")[0] == shared for s in SPECIALISTS)

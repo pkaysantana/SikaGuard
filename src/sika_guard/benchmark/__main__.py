@@ -148,6 +148,10 @@ def cmd_challenge_write(a: argparse.Namespace) -> int:
     from sika_guard.benchmark.visible import dump_visible
 
     out = Path(a.out_dir)
+    if a.set == "v5-validation":
+        cases_path, exp_path = devchallenge.write_v5(out)
+        print(f"wrote DEVELOPMENT-ONLY v5-validation cases to {cases_path} and, separately, their expectations to {exp_path}")
+        return 0
     cases_path, exp_path = devchallenge.write(out)
     if a.only:
         wanted = {s.strip() for s in a.only.split(",") if s.strip()}
@@ -263,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("challenge-write", help="write the development-only challenge cases and, separately, their expectations")
     s.add_argument("--out-dir", required=True)
     s.add_argument("--only", default="", help="comma-separated slugs: write a subset as smoke_cases.jsonl for a small live check")
+    s.add_argument("--set", choices=("challenge", "v5-validation"), default="challenge", help="v5-validation: the two fresh cases for the first check of prompts v5")
     s.set_defaults(fn=cmd_challenge_write)
     s = sub.add_parser("run", help="run development cases through chosen conditions; a fake provider by default, a live one only with explicit spend limits")
     s.add_argument("--cases", required=True)

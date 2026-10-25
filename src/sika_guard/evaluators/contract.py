@@ -231,7 +231,7 @@ class RejectedClaim(_Model):
     A rejection is never evidence about the merchant."""
 
     claim: ExtractedClaim
-    stage: Literal["reply_grounding"] = "reply_grounding"
+    stage: Literal["reply_references", "reply_grounding"] = "reply_grounding"  # which check refused it: an unknown reference or offer, or a quote not in the source
     reason: str
 
 
@@ -437,8 +437,13 @@ def verdict_from_analysis(
     unknown = sorted(cited - allowed_refs)
     bad_offers = sorted({c.offer_id for c in analysis.extracted_claims} - offer_ids)
     if unknown or bad_offers:
+        refused = tuple(
+            RejectedClaim(claim=c, stage="reply_references", reason="cites a reference or an offer that is not in this evaluator's input")
+            for c in analysis.extracted_claims
+            if c.source_ref not in allowed_refs or c.offer_id not in offer_ids
+        )
         return failure_verdict(
-            view, status=EvaluatorStatus.INVALID_RESPONSE, reason=f"cited references not present in the input: {(unknown + bad_offers)[:5]}", **common
+            view, status=EvaluatorStatus.INVALID_RESPONSE, rejected_claims=refused, reason=f"cited references not present in the input: {(unknown + bad_offers)[:5]}", **common
         )
     if payload is not None:
         rejected = tuple(

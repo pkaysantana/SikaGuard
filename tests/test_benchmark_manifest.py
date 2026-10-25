@@ -42,7 +42,7 @@ def test_the_manifest_records_what_the_brief_requires():
 def test_every_prompt_is_recorded_with_its_version_and_a_hash_of_its_text():
     m = fresh()
     versions = {e["evaluator_id"]: e["prompt_version"] for c in m["conditions"].values() for e in c["evaluators"]}
-    assert versions["generalist"] == "generalist-v4" and versions["rubric_generalist"] == "rubric-generalist-v4" and versions["authority"] == "authority-v4"
+    assert versions["generalist"] == "generalist-v5" and versions["rubric_generalist"] == "rubric-generalist-v5" and versions["authority"] == "authority-v5"
     assert all(len(e["system_prompt_sha256"]) == 64 for c in m["conditions"].values() for e in c["evaluators"])
     assert len(m["conditions"]["B3"]["evaluators"]) == 3 and len(m["conditions"]["C"]["evaluators"]) == 3
 
@@ -138,7 +138,8 @@ FIRST_POST_AUDIT = ROOT / "manifests" / "manifest-0003-post-remediation.json"  #
 POST_AUDIT = ROOT / "manifests" / "manifest-0004-post-remediation.json"
 PRE_DIRECTION_B = ROOT / "manifests" / "manifest-0005-pre-direction-b.json"
 DIRECTION_B_BASELINE = ROOT / "manifests" / "manifest-0006-direction-b.json"  # superseded by 0007, kept as history
-CURRENT = ROOT / "manifests" / "manifest-0007-hackathon-runner.json"
+HACKATHON_BASELINE = ROOT / "manifests" / "manifest-0007-hackathon-runner.json"  # superseded by 0008, kept as history
+CURRENT = ROOT / "manifests" / "manifest-0008-prompts-v5.json"
 
 # Every frozen-core file Direction B changed or added since manifest-0005, and nothing else. Each is explained in DIRECTION_B_TRIAGE.md.
 DIRECTION_B_AMENDED_FROZEN_FILES = {
@@ -149,12 +150,12 @@ DIRECTION_B_AMENDED_FROZEN_FILES = {
     "src/sika_guard/evaluate.py",  # Condition A+ runs without credentials
     "src/sika_guard/evaluators/adjudicate.py",  # committed payments are a limit code
     "src/sika_guard/evaluators/amounts.py",  # conditional/optional amounts; Unicode-folded reading
-    "src/sika_guard/evaluators/contract.py",  # trusted context and documents in the view; rejected claims preserved; DETERMINISTIC role
+    "src/sika_guard/evaluators/contract.py",  # trusted context and documents in the view; rejected claims preserved (also for unknown references); DETERMINISTIC role
     "src/sika_guard/evaluators/crosscheck.py",  # grounded facts, source classes, direction, materiality, enforcement
     "src/sika_guard/evaluators/grounding.py",  # Unicode folds, reading hazards, document sources
     "src/sika_guard/evaluators/llm.py",  # evaluators_for("A+")
     "src/sika_guard/evaluators/payloads.py",  # documents, subjects, trusted context
-    "src/sika_guard/evaluators/prompts.py",  # prompts v4 (the reason is recorded beside the version strings)
+    "src/sika_guard/evaluators/prompts.py",  # prompts v5 (the reason is recorded beside the version strings)
     "src/sika_guard/evaluators/scanner.py",  # new: the deterministic scanner
 }
 V4_PROMPT_EVALUATORS = {
@@ -167,11 +168,11 @@ def _touched(drift, group):
 
 
 def test_the_historical_manifests_are_intact_and_none_was_overwritten():
-    manifests = [mf.load_manifest(p) for p in (INITIAL, PRE_AUDIT, FIRST_POST_AUDIT, POST_AUDIT, PRE_DIRECTION_B, DIRECTION_B_BASELINE, CURRENT)]  # load_manifest refuses an edited one
-    first, pre, post1, post, start, _direction_b, now = manifests
+    manifests = [mf.load_manifest(p) for p in (INITIAL, PRE_AUDIT, FIRST_POST_AUDIT, POST_AUDIT, PRE_DIRECTION_B, DIRECTION_B_BASELINE, HACKATHON_BASELINE, CURRENT)]  # load_manifest refuses an edited one
+    first, pre, post1, post, start, _direction_b, _hackathon, now = manifests
     assert "INITIAL" in first["note"] and "AUDIT BASELINE" in pre["note"] and "not a freeze" in post1["note"] and "Supersedes manifest-0003" in post["note"]
     assert "STARTING STATE" in start["note"] and "not a freeze" in now["note"].lower()
-    assert len({m["digest"] for m in manifests}) == 7
+    assert len({m["digest"] for m in manifests}) == 8
     assert all(m["working_tree"]["head_matches_working_tree"] is False for m in manifests[1:])  # none of them is a committed tree
     assert all(m.get("status", "development_baseline") == "development_baseline" for m in manifests)  # none was ever approved as a freeze
 
@@ -197,8 +198,8 @@ def test_the_frozen_core_prompts_and_decision_policy_are_unchanged_since_the_cur
 def test_direction_b_changed_exactly_the_documented_frozen_files_and_only_the_prompts_it_says(baseline):
     drift = mf.verify_manifest(mf.load_manifest(baseline), ROOT)
     assert _touched(drift, "frozen_core") == DIRECTION_B_AMENDED_FROZEN_FILES, sorted(_touched(drift, "frozen_core") ^ DIRECTION_B_AMENDED_FROZEN_FILES)
-    assert {c.split(":")[0] for c in drift.prompt_changes} == V4_PROMPT_EVALUATORS  # every role moved v3 -> v4 together, because they share one common text
-    assert all("-v3@" in c and "-v4@" in c for c in drift.prompt_changes)
+    assert {c.split(":")[0] for c in drift.prompt_changes} == V4_PROMPT_EVALUATORS  # every role moved together, because they share one common text
+    assert all("-v3@" in c and "-v5@" in c for c in drift.prompt_changes)  # v3 -> v4 (Direction B) -> v5 (the extraction contract)
     assert _touched(drift, "development_data") == {"src/sika_guard/fixtures/builders.py"}  # the fixture builders gained the trusted fields; no fixture was edited
     assert drift.policy_changes  # the decision-policy document and rule engine changed on purpose, and say so
 
@@ -212,10 +213,22 @@ def test_manifest_0005_is_the_state_the_audit_remediation_left_it_in():
     assert drift.frozen_core_drifted  # and the tree has since moved on, which is what the Direction B work is
 
 
-def test_the_hackathon_runner_work_changed_only_three_frozen_files_and_no_prompt():
-    """Since the Direction B baseline (0006): the amount reader (customer-dependent conditions), the credit-terms payload (plan titles) and the
-    scanner (attribution across plans). No prompt changed, and neither did the decision policy's rules."""
+def test_since_the_direction_b_baseline_the_frozen_files_changed_are_exactly_the_documented_ones():
+    """Since 0006: the amount reader (customer-dependent conditions), the credit-terms payload (plan titles), the scanner (attribution across plans),
+    the prompts (v5) and the contract (rejected claims are also kept when a reply cites an unknown reference)."""
     drift = mf.verify_manifest(mf.load_manifest(DIRECTION_B_BASELINE), ROOT)
-    assert _touched(drift, "frozen_core") == {"src/sika_guard/evaluators/amounts.py", "src/sika_guard/evaluators/payloads.py", "src/sika_guard/evaluators/scanner.py"}
-    assert drift.prompt_changes == [d for d in drift.prompt_changes if d.startswith("A+/")]  # only the scanner's own definition (its source hash) moved
+    assert _touched(drift, "frozen_core") == {
+        "src/sika_guard/evaluators/amounts.py", "src/sika_guard/evaluators/payloads.py", "src/sika_guard/evaluators/scanner.py",
+        "src/sika_guard/evaluators/prompts.py", "src/sika_guard/evaluators/contract.py",
+    }
     assert _touched(drift, "development_data") == set()
+
+
+def test_prompts_v5_changed_only_the_prompt_text_and_the_contract_and_moved_every_role_from_v4_to_v5():
+    """Since 0007 (the v4 live check's baseline): prompts.py and the rejected-claim bookkeeping in contract.py. Nothing about verification,
+    materiality, enforcement or the policy moved."""
+    drift = mf.verify_manifest(mf.load_manifest(HACKATHON_BASELINE), ROOT)
+    assert _touched(drift, "frozen_core") == {"src/sika_guard/evaluators/prompts.py", "src/sika_guard/evaluators/contract.py"}
+    assert {c.split(":")[0] for c in drift.prompt_changes} == V4_PROMPT_EVALUATORS
+    assert all("-v4@" in c and "-v5@" in c for c in drift.prompt_changes)
+    assert drift.policy_changes == [] or "decision policy" in drift.policy_changes[0]

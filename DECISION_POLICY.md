@@ -179,3 +179,13 @@ Writing the development challenge set (`benchmark/devchallenge.py`) showed two w
 Both changes were made after seeing the development challenge set, which is development data written alongside the rules. They are not evidence of anything about held-out performance.
 
 **Run modes.** `deterministic` (A and A+ only; no model), `fake` (a fake provider through the real client; plumbing, not model output) and `dev-live` (the configured provider, on development cases, bound to a development-baseline manifest, with a mandatory `--max-calls` and an exact `--confirm-spend`). Only a `live` run bound to a frozen manifest can support a held-out claim, and none exists.
+
+### Prompts v5: the extraction contract (no change to verification or enforcement)
+
+The first live check of prompts v4 (16 calls, two development cases; kept unchanged in `results/smoke-v4-2026-10-25/`) showed that models reported a concern about an amount stated in a lender document as a **finding** and returned **no extracted claim** for it, so trusted code had nothing to verify. v5 repairs the interface, not the policy:
+
+* A finding is a concern, which trusted code can only record. An extracted claim is a concrete statement a source makes, copied with its amount: the only thing trusted code can check against the structured terms. A concern resting on a stated amount needs the statement extracted as well, whether or not the model thinks it is a problem; a claim is never invented, and what is uncertain is said in a `claim_unverified` finding.
+* A claim's `source_ref` is defined by where its item sits (inside `untrusted_merchant_content` or `authenticated_source_documents`, never under `trusted`), a ref is only the exact text of a `ref` field, and each specialist is told which of its own items can be a claim source (the authority analyst has none).
+* `fee_amount` covers one stated mandatory fee or a stated sum, not only a stated total.
+
+**Unchanged:** grounding, source classes, direction, predeclared materiality, the single AI-to-REVIEW route, mandate checks, deterministic BLOCK precedence. A concern without a grounded extraction still enforces nothing; an invalid reference still voids the whole reply (now with the refused claims preserved even when the reference was unknown). v4 results are v4 results and are not re-labelled.
