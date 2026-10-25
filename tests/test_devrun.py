@@ -234,3 +234,36 @@ def test_a_deterministic_run_sends_no_request_makes_no_claim_about_a_model_and_a
     assert rep["summary"]["A+"]["false_positives"] == 0 and rep["summary"]["A"]["missed"] == 4
     with pytest.raises(SystemExit, match=r"only A and A\+"):
         devrun.run_dev(challenge[0], tmp_path / "bad", (Condition.A, Condition.B), repeats=1, mode="deterministic", log=lambda *_: None)
+
+
+# --- opening a saved run for a demonstration must not alter it -------------------------------------------------------------------------------------
+
+
+def _tree_digest(root: Path) -> dict[str, str]:
+    import hashlib
+
+    return {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def test_reporting_on_a_saved_run_prints_and_writes_nothing_unless_asked(challenge, tmp_path, capsys):
+    result, cases, expectations = run_fake(challenge, tmp_path / "run")
+    run_dir = result.log_path.parent
+    before = _tree_digest(run_dir)
+    args = ["report", "--cases", str(cases), "--decisions", str(result.log_path), "--expectations", str(expectations)]
+    assert cli.main(args) == 0
+    out = capsys.readouterr().out
+    assert "read only: nothing was written" in out and "By condition" in out
+    assert _tree_digest(run_dir) == before  # not a byte changed, and no file added
+    saved = tmp_path / "copy"
+    saved.mkdir()
+    assert cli.main([*args, "--save-to", str(saved)]) == 0
+    assert (saved / "results.json").is_file() and _tree_digest(run_dir) == before
+
+
+def test_the_saved_live_runs_in_the_repository_can_be_reported_without_changing_a_byte():
+    root = Path(__file__).resolve().parents[1] / "results"
+    before = _tree_digest(root)
+    for base, stem in (("v5-validation", "v5"), ("smoke-v4-2026-10-25", "smoke")):
+        cases, exp = root / base / f"{stem}_cases.jsonl", root / base / f"{stem}_expectations.json"
+        assert cli.main(["report", "--cases", str(cases), "--decisions", str(root / base / "live" / "decisions.jsonl"), "--expectations", str(exp)]) == 0
+    assert _tree_digest(root) == before

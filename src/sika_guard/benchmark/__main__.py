@@ -194,7 +194,8 @@ def cmd_run(a: argparse.Namespace) -> int:
     return _report(Path(a.cases), result.log_path, Path(a.expectations) if a.expectations else None, result.manifests_dir, out)
 
 
-def _report(cases_path: Path, log_path: Path, expectations: Path | None, manifests_dir: Path | None, out: Path) -> int:
+def _report(cases_path: Path, log_path: Path, expectations: Path | None, manifests_dir: Path | None, out: Path | None) -> int:
+    """Print the report. It is written to `out` only when one is given: opening a saved run must never rewrite the saved run."""
     from sika_guard.benchmark import devrun
     from sika_guard.benchmark.seal import LabelsLockedError
 
@@ -203,6 +204,9 @@ def _report(cases_path: Path, log_path: Path, expectations: Path | None, manifes
     except LabelsLockedError as exc:
         print(f"expectations stay closed: {exc}", file=sys.stderr)
         return 3
+    if out is None:
+        print("\n" + devrun.format_report(rep) + "\n\n(read only: nothing was written; use --save-to DIR to keep a copy)")
+        return 0
     json_path, text_path = devrun.write_outputs(rep, out)
     print("\n" + devrun.format_report(rep) + f"\n\nsaved: {json_path} and {text_path}")
     return 0
@@ -210,7 +214,8 @@ def _report(cases_path: Path, log_path: Path, expectations: Path | None, manifes
 
 def cmd_report(a: argparse.Namespace) -> int:
     log = Path(a.decisions)
-    return _report(Path(a.cases), log, Path(a.expectations) if a.expectations else None, Path(a.manifests_dir) if a.manifests_dir else log.parent / "manifests", log.parent)
+    return _report(Path(a.cases), log, Path(a.expectations) if a.expectations else None, Path(a.manifests_dir) if a.manifests_dir else log.parent / "manifests",
+                   Path(a.save_to) if a.save_to else None)
 
 
 def cmd_score(a: argparse.Namespace) -> int:
@@ -286,6 +291,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--decisions", required=True)
     s.add_argument("--expectations", default=None)
     s.add_argument("--manifests-dir", default=None)
+    s.add_argument("--save-to", default=None, help="write results.json and results.txt here; by default a report only prints and never touches the saved run")
     s.set_defaults(fn=cmd_report)
     s = sub.add_parser("score", help="seal a decision log, open the labels through the seal, and score")
     s.add_argument("--cases", required=True)

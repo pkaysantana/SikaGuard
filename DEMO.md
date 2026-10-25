@@ -12,7 +12,7 @@ On a development case where a lender's *prose* states a mandatory £32 charge th
 
 ```bash
 pip install -e ".[dev]"
-pytest                                              # 1026 offline tests, no network, no credentials
+pytest                                              # 1028 offline tests, no network, no credentials
 ```
 
 ### 1. The three demonstration cases, deterministic and instant
@@ -43,7 +43,7 @@ python -m sika_guard.benchmark report --cases results/v5-validation/v5_cases.jso
 python -m sika_guard.benchmark report --cases results/smoke-v4-2026-10-25/smoke_cases.jsonl --decisions results/smoke-v4-2026-10-25/live/decisions.jsonl --expectations results/smoke-v4-2026-10-25/smoke_expectations.json
 ```
 
-The first is the latest check (prompts **v5**, 8 calls); the second is the earlier one (prompts **v4**, 16 calls). They are different prompts on different cases and are not comparable with each other.
+The first is the latest check (prompts **v5**, 8 calls); the second is the earlier one (prompts **v4**, 16 calls). They are different prompts on different cases and are not comparable with each other. A report only prints: it never rewrites the saved run (add `--save-to DIR` to keep a copy), and it makes no model call.
 
 ### 4. Re-run a live check (spends money; hard-capped, never retried)
 
@@ -89,7 +89,7 @@ Total: 8 paid requests, 0 retries, 23,848 prompt and 2,790 completion tokens, 0.
 | Verified AI interceptions | 0 | 1 (scanner) | 0 | 0 | 0 | 0 |
 | Replies that failed the strict contract | n/a | n/a | 0 of 2 | 0 of 6 | 0 of 2 | 2 of 6 |
 
-Under v4 no AI condition extracted the charge: the models reported it as a finding. That is the failure prompts v5 were written to repair. Total across both live checks: **24 paid requests**, 0.0130 provider-reported cost (unit unknown).
+Under v4 no AI condition extracted the charge: the models reported it as a finding. That is the failure prompts v5 were written to repair. The two live checks documented here used **24 paid requests** and 0.0130 provider-reported cost (unit unknown). Three earlier smoke rounds on prompts v1 to v3 used 32 more (their raw replies are kept in `tests/data/recorded_replies.json`).
 
 ### Deterministic: all 14 development challenge cases (real; no model involved)
 
@@ -121,7 +121,7 @@ Concurrency is not a speed-up over one call (B's median per-case time was 4.9 s 
 
 ## Limitations (please read)
 
-* **Four live cases in total, one model, 24 calls.** An interoperability and honesty check, not a benchmark. No statistical claim is made.
+* **Two small live checks (four cases between them), one model.** An interoperability and honesty check, not a benchmark. No statistical claim is made.
 * **Incremental benefit over a plain parser is unproven, and so far zero.** In every live run A+ did everything the verified AI findings did. The only place a model might add value (reading prose a parser cannot place) is exactly where the verifier cannot certify its reading, so it can only be reported as a candidate.
 * **The v5 success is one extraction on one case.** The prompts were written after seeing the v4 failure; the v5 cases are fresh, but the charge is the same kind of statement. Whether v5 generalises is unknown.
 * **Models hallucinate and mis-copy.** False limit allegations, an extra schema field, and a mis-copied reference all occurred; trusted code rejected or logged each, and none changed a decision.
